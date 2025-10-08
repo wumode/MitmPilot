@@ -1,0 +1,163 @@
+from abc import ABCMeta, abstractmethod
+from pathlib import Path
+from typing import Any
+
+from app.core.config import settings
+from app.core.event import EventManager
+from app.db.addondata_oper import AddonDataOper
+from app.db.systemconfig_oper import SystemConfigOper
+from app.schemas import AddonApi, AddonService, Dashboard, HookData
+from app.schemas.types import AddonRenderMode, HookEventType, SystemConfigKey
+
+
+class _AddonBase(metaclass=ABCMeta):
+    """The addon module base class.
+
+    Implements the addon function by inheriting this class.
+    """
+
+    # name
+    addon_name: str = ""
+    # version
+    addon_version: str = ""
+    # description
+    addon_desc: str = ""
+    # loading order
+    addon_order: int = 9999
+    # minium system version
+    version_required: str | None = None
+
+    def __init__(self):
+        self.addondata = AddonDataOper()
+        self.systemconfig = SystemConfigOper()
+        self.eventmanager = EventManager()
+
+    @abstractmethod
+    def init_addon(self, config: dict = None):
+        """Initialize addon.
+
+        :param config: configuration dictionary
+        """
+        pass
+
+    @abstractmethod
+    def get_state(self) -> bool:
+        """Get addon running status."""
+        pass
+
+    @abstractmethod
+    def get_hooks(self) -> dict[HookEventType, list[HookData]]:
+        pass
+
+    @staticmethod
+    def get_render_mode() -> AddonRenderMode:
+        """Get addon rendering mode :return: 1.
+
+        Rendering mode, supports: vue/vuetify, default is vuetify
+        """
+        return AddonRenderMode.vuetify
+
+    @abstractmethod
+    def get_api(self) -> list[AddonApi]:
+        """Register addon API."""
+        pass
+
+    @abstractmethod
+    def get_form(self) -> tuple[list[dict] | None, dict[str, Any]]:
+        """Assemble the addon configuration page.
+
+        The addon configuration page
+        is assembled using Vuetify components, refer to: https://vuetifyjs.com/
+        :return:
+            1. Page configuration (vuetify mode) or None (vue mode);
+            2. Default data structure
+        """
+        pass
+
+    @abstractmethod
+    def get_page(self) -> list[dict] | None:
+        """
+        Assemble the addon details page, need to return the page configuration with data
+        The addon details page is assembled using Vuetify components,
+        refer to: https://vuetifyjs.com/
+        :return: Page configuration (vuetify mode) or None (vue mode)
+        """
+        pass
+
+    @abstractmethod
+    def get_service(self) -> list[AddonService]:
+        """Register addon public services."""
+        pass
+
+    @abstractmethod
+    def get_dashboard(self, key: str, **kwargs) -> Dashboard | None:
+        """
+        Get the addon dashboard page, need to return:
+        1. Dashboard col configuration dictionary;
+        2. Global configuration (layout, auto refresh, etc.);
+        3. Dashboard page element configuration with data json (vuetify)
+        or None (vue mode)
+
+        :param key: Dashboard key, return the corresponding dashboard data according
+        to the specified key
+        """
+        pass
+
+    @abstractmethod
+    def get_dashboard_meta(self) -> list[dict[str, str]] | None:
+        """
+        Get addon dashboard meta-information
+        Return example:
+            [{
+                "key": "dashboard1", // The key of the dashboard, unique within
+                the current addon
+                "name": "Dashboard 1" // The name of the dashboard
+            }, {
+                "key": "dashboard2",
+                "name": "Dashboard 2"
+            }]
+        """
+        pass
+
+    def get_name(self) -> str:
+        """Get addon name :return: The addon name."""
+        return self.addon_name
+
+    def update_config(self, config: dict, addon_id: str | None = None) -> bool | None:
+        """Update configuration information :param config: The configuration information
+        dictionary :param addon_id: Addon ID."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        return self.systemconfig.set(
+            f"{SystemConfigKey.AddonConfigPrefix.value}.{addon_id}", config
+        )
+
+    def get_config(self, addon_id: str | None = None) -> Any:
+        """Get configuration information :param addon_id: Addon ID."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        return self.systemconfig.get(
+            f"{SystemConfigKey.AddonConfigPrefix.value}.{addon_id}"
+        )
+
+    def get_data_path(self, addon_id: str | None = None) -> Path:
+        """Get addon data storage directory."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        data_path = settings.ADDON_DATA_PATH / f"{addon_id}"
+        if not data_path.exists():
+            data_path.mkdir(parents=True)
+        return data_path
+
+    def save_data(self, key: str, value: Any, addon_id: str | None = None):
+        """Save addon data :param key: Data key :param value: Data value :param
+        addon_id: Addon ID."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        self.addondata.save(addon_id, key, value)
+
+    def get_data(self, key: str | None = None, addon_id: str | None = None) -> Any:
+        """Get addon data :param key: Data key :param addon_id: addon_id."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        return self.addondata.get_data(addon_id, key)
