@@ -22,17 +22,25 @@ class SystemChain(ChainBase):
         server_local_version = self.get_server_local_version()
         front_local_version = await self.get_frontend_version()
         if server_release_version == server_local_version:
-            title = (f"Current backend version: {server_local_version}, "
-                     f"already the latest version\n")
+            title = (
+                f"Current backend version: {server_local_version}, "
+                f"already the latest version\n"
+            )
         else:
-            title = (f"Current backend version: {server_local_version}, "
-                     f"remote version: {server_release_version}\n")
+            title = (
+                f"Current backend version: {server_local_version}, "
+                f"remote version: {server_release_version}\n"
+            )
         if front_release_version == front_local_version:
-            title += (f"Current frontend version: {front_local_version}, "
-                      f"already the latest version")
+            title += (
+                f"Current frontend version: {front_local_version}, "
+                f"already the latest version"
+            )
         else:
-            title += (f"Current frontend version: {front_local_version}, "
-                      f"remote version: {front_release_version}")
+            title += (
+                f"Current frontend version: {front_local_version}, "
+                f"remote version: {front_release_version}"
+            )
         return title
 
     @staticmethod

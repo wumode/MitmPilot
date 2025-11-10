@@ -17,15 +17,11 @@ from app.utils.singleton import Singleton, SingletonClass
 
 
 class MessageTemplateHelper:
-    """
-    消息模板渲染器
-    """
+    """消息模板渲染器."""
 
     @staticmethod
     def render(message: Notification, *args, **kwargs) -> Notification | None:
-        """
-        渲染消息模板
-        """
+        """渲染消息模板."""
         if not MessageTemplateHelper.is_instance_valid(message):
             if MessageTemplateHelper.meets_update_conditions(message, *args, **kwargs):
                 logger.info("将使用模板渲染消息内容")
@@ -36,17 +32,14 @@ class MessageTemplateHelper:
 
     @staticmethod
     def is_instance_valid(message: Notification) -> bool:
-        """
-        检查消息是否有效
-        """
+        """检查消息是否有效."""
         if isinstance(message, Notification):
             return bool(message.title or message.text)
         return False
 
     @staticmethod
     def meets_update_conditions(message: Notification, *args, **kwargs) -> bool:
-        """
-        判断是否满足消息实例更新条件
+        """判断是否满足消息实例更新条件.
 
         满足条件需同时具备：
         1. 消息为有效Notification实例
@@ -59,9 +52,7 @@ class MessageTemplateHelper:
 
     @staticmethod
     def _get_template(message: Notification) -> str | None:
-        """
-        获取消息模板
-        """
+        """获取消息模板."""
         template_dict: dict[str, str] = SystemConfigOper().get(
             SystemConfigKey.NotificationTemplates
         )
@@ -69,15 +60,12 @@ class MessageTemplateHelper:
 
 
 class MessageQueueManager(metaclass=SingletonClass):
-    """
-    消息发送队列管理器
-    """
+    """消息发送队列管理器."""
 
     def __init__(
-        self, send_callback: Callable | None = None, check_interval: int | None = 10
+        self, send_callback: Callable | None = None, check_interval: int = 10
     ) -> None:
-        """
-        消息队列管理器初始化
+        """消息队列管理器初始化.
 
         :param send_callback: 实际发送消息的回调函数
         :param check_interval: 时间检查间隔（秒）
@@ -88,26 +76,21 @@ class MessageQueueManager(metaclass=SingletonClass):
 
         self.queue: queue.Queue[Any] = queue.Queue()
         self.send_callback = send_callback
-        self.check_interval = check_interval
+        self.check_interval: int = check_interval
 
         self._running = True
         self.thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self.thread.start()
 
     def init_config(self):
-        """
-        初始化配置
-        """
+        """初始化配置."""
         self.schedule_periods = self._parse_schedule(
             SystemConfigOper().get(SystemConfigKey.NotificationSendTime)
         )
 
     @staticmethod
     def _parse_schedule(periods: list | dict) -> list[tuple[int, int, int, int]]:
-        """
-        将字符串时间格式转换为分钟数元组
-        支持格式为 'HH:MM' 或 'HH:MM:SS' 的时间字符串
-        """
+        """将字符串时间格式转换为分钟数元组 支持格式为 'HH:MM' 或 'HH:MM:SS' 的时间字符串."""
         parsed = []
         if not periods:
             return parsed
@@ -153,16 +136,12 @@ class MessageQueueManager(metaclass=SingletonClass):
 
     @staticmethod
     def _time_to_minutes(time_str: str) -> int:
-        """
-        将 'HH:MM' 格式转换为分钟数
-        """
+        """将 'HH:MM' 格式转换为分钟数."""
         hours, minutes = map(int, time_str.split(":"))
         return hours * 60 + minutes
 
     def _is_in_scheduled_time(self, current_time: datetime) -> bool:
-        """
-        检查当前时间是否在允许发送的时间段内
-        """
+        """检查当前时间是否在允许发送的时间段内."""
         if not self.schedule_periods:
             return True
         current_minutes = current_time.hour * 60 + current_time.minute
@@ -180,9 +159,7 @@ class MessageQueueManager(metaclass=SingletonClass):
         return False
 
     def send_message(self, *args, **kwargs) -> None:
-        """
-        发送消息（立即发送或加入队列）
-        """
+        """发送消息（立即发送或加入队列）"""
         immediately = kwargs.pop("immediately", False)
         if immediately or self._is_in_scheduled_time(datetime.now()):
             self._send(*args, **kwargs)
@@ -191,17 +168,13 @@ class MessageQueueManager(metaclass=SingletonClass):
             logger.info(f"消息已加入队列，当前队列长度：{self.queue.qsize()}")
 
     async def async_send_message(self, *args, **kwargs) -> None:
-        """
-        异步发送消息（直接加入队列）
-        """
+        """异步发送消息（直接加入队列）"""
         kwargs.pop("immediately", False)
         self.queue.put({"args": args, "kwargs": kwargs})
         logger.info(f"消息已加入队列，当前队列长度：{self.queue.qsize()}")
 
     def _send(self, *args, **kwargs) -> None:
-        """
-        实际发送消息（可通过回调函数自定义）
-        """
+        """实际发送消息（可通过回调函数自定义）"""
         if self.send_callback:
             try:
                 logger.info(f"发送消息：{kwargs}")
@@ -210,9 +183,7 @@ class MessageQueueManager(metaclass=SingletonClass):
                 logger.error(f"发送消息错误：{str(e)}")
 
     def _monitor_loop(self) -> None:
-        """
-        后台线程循环检查时间并处理队列
-        """
+        """后台线程循环检查时间并处理队列."""
         while self._running:
             current_time = datetime.now()
             if self._is_in_scheduled_time(current_time):
@@ -230,9 +201,7 @@ class MessageQueueManager(metaclass=SingletonClass):
             time.sleep(self.check_interval)
 
     def stop(self) -> None:
-        """
-        停止队列管理器
-        """
+        """停止队列管理器."""
         self._running = False
         logger.info("正在停止消息队列...")
         self.thread.join()
@@ -240,9 +209,7 @@ class MessageQueueManager(metaclass=SingletonClass):
 
 
 class MessageHelper(metaclass=Singleton):
-    """
-    消息队列管理器，包括系统消息和用户消息
-    """
+    """消息队列管理器，包括系统消息和用户消息."""
 
     def __init__(self):
         self.sys_queue = queue.Queue()
@@ -255,13 +222,8 @@ class MessageHelper(metaclass=Singleton):
         title: str = None,
         note: list | dict = None,
     ):
-        """
-        存消息
-        :param message: 消息
-        :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息
-        :param title: 标题
-        :param note: 附件json
-        """
+        """存消息 :param message: 消息 :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息
+        :param title: 标题 :param note: 附件json."""
         if role in ["system", "plugin"]:
             # 没有标题时获取插件名称
             if role == "plugin" and not title:
@@ -302,10 +264,7 @@ class MessageHelper(metaclass=Singleton):
                 self.user_queue.put(json.dumps(content))
 
     def get(self, role: str = "system") -> str | None:
-        """
-        取消息
-        :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息
-        """
+        """取消息 :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息."""
         if role == "system":
             if not self.sys_queue.empty():
                 return self.sys_queue.get(block=False)
@@ -316,8 +275,6 @@ class MessageHelper(metaclass=Singleton):
 
 
 def stop_message():
-    """
-    停止消息服务
-    """
+    """停止消息服务."""
     # 停止消息队列
     MessageQueueManager().stop()

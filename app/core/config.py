@@ -300,7 +300,8 @@ class Settings(BaseSettings, ConfigModel):
                 logger.warning(
                     f"'API_TOKEN' length is less than 16 characters, "
                     f"there is a security risk, "
-                    f"a new random 【API_TOKEN】{new_token} has been generated")
+                    f"a new random 【API_TOKEN】{new_token} has been generated"
+                )
             return new_token, True
         return value, str(value) != str(original_value)
 
@@ -314,9 +315,11 @@ class Settings(BaseSettings, ConfigModel):
             converted_value
         )
         if is_converted:
-            message = (f"The value '{original_value}' for configuration "
-                       f"item '{field_name}' is invalid, "
-                       f"it has been replaced with '{converted_value}'")
+            message = (
+                f"The value '{original_value}' for configuration "
+                f"item '{field_name}' is invalid, "
+                f"it has been replaced with '{converted_value}'"
+            )
             logger.warning(message)
 
         if field_name in os.environ:
@@ -342,8 +345,10 @@ class Settings(BaseSettings, ConfigModel):
                 quote_mode="always",
             )
             if is_converted:
-                logger.info(f"Configuration item '{field_name}' has been automatically "
-                            f"corrected and written to 'app.env' file")
+                logger.info(
+                    f"Configuration item '{field_name}' has been automatically "
+                    f"corrected and written to 'app.env' file"
+                )
         return True, message
 
     def update_setting(self, key: str, value: Any) -> tuple[bool | None, str]:
@@ -439,14 +444,18 @@ class Settings(BaseSettings, ConfigModel):
     @property
     def USER_AGENT(self) -> str:
         """Global user agent string."""
-        return (f"{self.PROJECT_NAME}/{APP_VERSION[1:]} ({platform.system()} "
-                f"{platform.release()}; {SystemUtils.cpu_arch()})")
+        return (
+            f"{self.PROJECT_NAME}/{APP_VERSION[1:]} ({platform.system()} "
+            f"{platform.release()}; {SystemUtils.cpu_arch()})"
+        )
 
     @property
     def NORMAL_USER_AGENT(self) -> str:
         """Default browser user agent string."""
-        return ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
+        return (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+        )
 
     @property
     def GITHUB_HEADERS(self) -> dict:

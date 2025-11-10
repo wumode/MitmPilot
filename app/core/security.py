@@ -273,10 +273,8 @@ def verify_apikey(apikey: Annotated[str, Security(__get_api_key)]) -> str:
 
 
 def verify_apitoken(token: Annotated[str, Security(__get_api_token)]) -> str:
-    """使用 API Token 进行身份认证 :param token: API Token，从 URL 查询参数中获取 token=xxx :return:
-
-    返回校验通过的 API Token.
-    """
+    """使用 API Token 进行身份认证 :param token: API Token，从 URL 查询参数中获取 token=xxx :return: 验通过的
+    API Token."""
     return __verify_key(token, settings.API_TOKEN, "token")
 
 

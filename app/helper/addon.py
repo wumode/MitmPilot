@@ -13,7 +13,7 @@ from anyio import Path as AsyncPath
 from pydantic import ValidationError
 from requests import Response
 
-from app.core.cache import cached
+from app.core.cache import cached, fresh
 from app.core.config import settings
 from app.db.systemconfig_oper import SystemConfigOper
 from app.log import logger
@@ -28,9 +28,7 @@ ADDON_DIR = Path(settings.ROOT_PATH) / "app" / settings.ADDON_FOLDER
 
 
 class PluginHelper(metaclass=WeakSingleton):
-    """
-    Plugin market management, download and install plugins locally
-    """
+    """Plugin market management, download and install plugins locally."""
 
     _base_url = "https://raw.githubusercontent.com/{user}/{repo}/main/"
     _install_reg = f"{settings.MP_SERVER_HOST}/plugin/install/{{aid}}"
@@ -45,34 +43,18 @@ class PluginHelper(metaclass=WeakSingleton):
                 if self.install_report():
                     self.systemconfig.set(SystemConfigKey.PluginInstallReport, "1")
 
-    def get_plugins(
-        self, repo_url: str, package_version: str | None = None, force: bool = False
-    ) -> AddonList | None:
-        """
-        Retrieves a list of all the latest plugins from GitHub.
+    def get_plugins(self, repo_url: str, force: bool = False) -> AddonList | None:
+        """Retrieves a list of all the latest plugins from GitHub.
+
         :param repo_url: GitHub repository address
-        :param package_version: Preferred plugin version (e.g., "v2", "v3"). If not specified, v1 is retrieved.
         :param force: Whether to force refresh, ignoring the cache.
         """
-        # 如果强制刷新，直接调用不带缓存的版本
-        if force:
+        with fresh(force):
             return self._request_plugins(repo_url)
-        else:
-            return self._request_plugins_cached(repo_url, package_version)
-
-    @cached(maxsize=128, ttl=1800)
-    def _request_plugins_cached(self, repo_url: str) -> AddonList | None:
-        """
-        Retrieves a list of all the latest plugins from GitHub (cached).
-        :param repo_url: GitHub repository address
-        """
-        return self._request_plugins(repo_url)
 
     @staticmethod
     def get_repo_info(repo_url: str) -> tuple[str | None, str | None]:
-        """
-        Retrieves GitHub repository information.
-        """
+        """Retrieves GitHub repository information."""
         if not repo_url:
             return None, None
         if not repo_url.endswith("/"):
@@ -88,9 +70,7 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @cached(maxsize=1, ttl=1800)
     def get_statistic(self) -> dict:
-        """
-        Retrieves plugin installation statistics.
-        """
+        """Retrieves plugin installation statistics."""
         if not settings.PLUGIN_STATISTIC_SHARE:
             return {}
         res = RequestUtils(proxies=settings.PROXY, timeout=10).get_res(
@@ -101,9 +81,7 @@ class PluginHelper(metaclass=WeakSingleton):
         return {}
 
     def install_reg(self, pid: str, repo_url: str | None = None) -> bool:
-        """
-        Registers plugin installation for statistics.
-        """
+        """Registers plugin installation for statistics."""
         if not settings.PLUGIN_STATISTIC_SHARE:
             return False
         if not pid:
@@ -117,9 +95,11 @@ class PluginHelper(metaclass=WeakSingleton):
         return False
 
     def install_report(self, items: list[tuple[str, str | None]] | None = None) -> bool:
-        """
-        Reports existing plugin installation statistics (batch). Supports sending repo_url.
-        :param items: Optional, in the format [(addon_id, repo_url), ...]; if not provided, it falls back to historical configuration, only sending addon_id.
+        """Reports existing plugin installation statistics (batch).
+
+        :param items: Optional, in the format [(addon_id, repo_url), ...];
+                      if not provided, it falls back to historical configuration,
+                      only sending addon_id.
         """
         if not settings.PLUGIN_STATISTIC_SHARE:
             return False
@@ -142,8 +122,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @staticmethod
     def __backup_plugin(pid: str) -> str | None:
-        """
-        Backs up the old plugin directory.
+        """Backs up the old plugin directory.
+
         :param pid: Plugin ID
         :return: Path to the backup directory
         """
@@ -151,7 +131,8 @@ class PluginHelper(metaclass=WeakSingleton):
         backup_dir = Path(settings.TEMP_PATH) / "plugin_backup" / pid.lower()
 
         if plugin_dir.exists():
-            # Clear existing backup directory during backup to prevent residual files from affecting it.
+            # Clear the existing backup directory during backup to prevent residual
+            # files from affecting it.
             if backup_dir.exists():
                 shutil.rmtree(backup_dir, ignore_errors=True)
                 logger.debug(f"{pid} Old backup directory cleared {backup_dir}")
@@ -163,8 +144,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @staticmethod
     def __restore_plugin(pid: str, backup_dir: str):
-        """
-        Restores the old plugin directory.
+        """Restores the old plugin directory.
+
         :param pid: Plugin ID
         :param backup_dir: Path to the backup directory
         """
@@ -181,8 +162,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @staticmethod
     def __remove_old_plugin(pid: str):
-        """
-        Removes the old plugin.
+        """Removes the old plugin.
+
         :param pid: Plugin ID
         """
         plugin_dir = ADDON_DIR / pid.lower()
@@ -215,8 +196,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @staticmethod
     def __standardize_pkg_name(name: str) -> str:
-        """
-        Standardizes the package name by converting it to lowercase and replacing hyphens with underscores.
+        """Standardizes the package name by converting it to lowercase and replacing
+        hyphens with underscores.
 
         :param name: Original package name
         :return: Standardized package name
@@ -226,9 +207,8 @@ class PluginHelper(metaclass=WeakSingleton):
     async def async_get_plugin_package_version(
         self, pid: str, repo_url: str
     ) -> str | None:
-        """
-        Asynchronous version of the method to get plugin version, same functionality as get_plugin_package_version.
-        """
+        """Asynchronous version of the method to get the plugin version, same
+        functionality as get_plugin_package_version."""
         addons = await self.async_get_plugins(repo_url)
         if addons is None:
             return None
@@ -240,8 +220,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @cached(maxsize=128, ttl=1800)
     async def async_get_plugins(self, repo_url: str) -> AddonList | None:
-        """
-        Asynchronously retrieves a list of all the latest plugins from GitHub.
+        """Asynchronously retrieves a list of all the latest plugins from GitHub.
+
         :param repo_url: GitHub repository address
         """
         user, repo = self.get_repo_info(repo_url)
@@ -262,9 +242,10 @@ class PluginHelper(metaclass=WeakSingleton):
                 return None
         return None
 
+    @cached(maxsize=128, ttl=1800)
     def _request_plugins(self, repo_url: str) -> AddonList | None:
-        """
-        Retrieves a list of all the latest plugins from GitHub (without cache).
+        """Retrieves a list of all the latest plugins from GitHub (without cache).
+
         :param repo_url: GitHub repository address
         """
         user, repo = self.get_repo_info(repo_url)
@@ -286,9 +267,7 @@ class PluginHelper(metaclass=WeakSingleton):
         return None
 
     async def async_get_statistic(self) -> dict:
-        """
-        Asynchronously retrieves plugin installation statistics.
-        """
+        """Asynchronously retrieves plugin installation statistics."""
         if not settings.PLUGIN_STATISTIC_SHARE:
             return {}
         res = await AsyncRequestUtils(proxies=settings.PROXY, timeout=10).get_res(
@@ -301,9 +280,7 @@ class PluginHelper(metaclass=WeakSingleton):
         return {}
 
     async def async_install_reg(self, pid: str, repo_url: str | None = None) -> bool:
-        """
-        Asynchronously registers plugin installation for statistics.
-        """
+        """Asynchronously registers plugin installation for statistics."""
         if not settings.PLUGIN_STATISTIC_SHARE:
             return False
         if not pid:
@@ -319,9 +296,11 @@ class PluginHelper(metaclass=WeakSingleton):
     async def async_install_report(
         self, items: list[tuple[str, str | None]] | None = None
     ) -> bool:
-        """
-        Asynchronously reports existing plugin installation statistics (batch). Supports sending repo_url.
-        :param items: Optional, in the format [(addon_id, repo_url), ...]; if not provided, it falls back to historical configuration, only sending addon_id.
+        """Asynchronously reports existing plugin installation statistics (batch).
+
+        :param items: Optional, in the format [(addon_id, repo_url), ...];
+                      if not provided, it falls back to historical configuration,
+                      only sending addon_id.
         """
         if not settings.PLUGIN_STATISTIC_SHARE:
             return False
@@ -346,11 +325,11 @@ class PluginHelper(metaclass=WeakSingleton):
     async def __async_get_file_list(
         pid: str, user_repo: str
     ) -> tuple[list[GithubItem] | None, str]:
-        """
-        Asynchronously retrieves the plugin's file list.
+        """Asynchronously retrieves the plugin's file list.
+
         :param pid: Plugin ID
         :param user_repo: GitHub repository user/repo path
-        :return: (File list, error message)
+        :return: File list, error message
         """
         file_api = (
             f"https://api.github.com/repos/{user_repo}/contents/addons/{pid.lower()}"
@@ -362,7 +341,11 @@ class PluginHelper(metaclass=WeakSingleton):
             return (
                 None,
                 f"Failed to connect to repository: {res.status_code} - "
-                f"{'Rate limit exceeded, please set Github Token or try again later' if res.status_code == 403 else res.reason}",
+                f"{
+                    'Rate limit exceeded, please set Github Token or try again later'
+                    if res.status_code == 403
+                    else res.reason
+                }",
             )
 
         try:
@@ -374,7 +357,8 @@ class PluginHelper(metaclass=WeakSingleton):
             else:
                 return (
                     None,
-                    "Plugin does not exist in the repository or the returned data format is incorrect",
+                    "Plugin does not exist in the repository or "
+                    "the returned data format is incorrect",
                 )
         except Exception as e:
             logger.error(f"Failed to parse plugin data: {e}")
@@ -383,12 +367,12 @@ class PluginHelper(metaclass=WeakSingleton):
     async def __async_download_files(
         self, pid: str, file_list: list[GithubItem], user_repo: str
     ) -> tuple[bool, str]:
-        """
-        Asynchronously downloads plugin files.
+        """Asynchronously downloads plugin files.
+
         :param pid: Plugin ID
-        :param file_list: List of files to download, including file metadata (and download links)
+        :param file_list: List of files to download, including file metadata
         :param user_repo: GitHub repository user/repo path
-        :return: (Success status, error message)
+        :return: Success status, error message
         """
         if not file_list:
             return False, "File list is empty"
@@ -421,7 +405,8 @@ class PluginHelper(metaclass=WeakSingleton):
                         f"File {item.path} downloaded successfully, saved to: {file_path}"
                     )
                 else:
-                    # If it's a subdirectory, add its contents to the stack for further processing.
+                    # If it's a subdirectory, add its contents to the stack for further
+                    # processing.
                     sub_list, msg = await self.__async_get_file_list(
                         f"{current_pid}/{item.name}", user_repo
                     )
@@ -432,8 +417,8 @@ class PluginHelper(metaclass=WeakSingleton):
         return True, ""
 
     async def __async_backup_plugin(self, pid: str) -> str | None:
-        """
-        Asynchronously backs up the old plugin directory.
+        """Asynchronously backs up the old plugin directory.
+
         :param pid: Plugin ID
         :return: Path to the backup directory
         """
@@ -441,7 +426,8 @@ class PluginHelper(metaclass=WeakSingleton):
         backup_dir = AsyncPath(settings.TEMP_PATH) / "plugin_backup" / pid.lower()
 
         if await plugin_dir.exists():
-            # Clear existing backup directory during backup to prevent residual files from affecting it.
+            # Clear the existing backup directory during backup to prevent residual
+            # files from affecting it.
             if await backup_dir.exists():
                 await aioshutil.rmtree(backup_dir, ignore_errors=True)
                 logger.debug(f"{pid} Old backup directory cleared {backup_dir}")
@@ -453,8 +439,8 @@ class PluginHelper(metaclass=WeakSingleton):
         return str(backup_dir) if await backup_dir.exists() else None
 
     async def __async_restore_plugin(self, pid: str, backup_dir: str):
-        """
-        Asynchronously restores the old plugin directory.
+        """Asynchronously restores the old plugin directory.
+
         :param pid: Plugin ID
         :param backup_dir: Path to the backup directory
         """
@@ -472,8 +458,8 @@ class PluginHelper(metaclass=WeakSingleton):
 
     @staticmethod
     async def __async_remove_old_plugin(pid: str):
-        """
-        Asynchronously removes the old plugin.
+        """Asynchronously removes the old plugin.
+
         :param pid: Plugin ID
         """
         plugin_dir = AsyncPath(ADDON_DIR) / pid.lower()
@@ -481,8 +467,8 @@ class PluginHelper(metaclass=WeakSingleton):
             await aioshutil.rmtree(plugin_dir, ignore_errors=True)
 
     async def _async_copytree(self, src: AsyncPath, dst: AsyncPath):
-        """
-        Asynchronously and recursively copies a directory.
+        """Asynchronously and recursively copies a directory.
+
         :param src: Source directory
         :param dst: Destination directory
         """
@@ -507,8 +493,9 @@ class PluginHelper(metaclass=WeakSingleton):
         repo_url: str,
         force_install: bool = False,
     ) -> tuple[bool, str]:
-        """
-        Asynchronously installs a plugin, including dependency installation and file download, with automatic fallback for related resources.
+        """Asynchronously installs a plugin, including dependency installation and file
+        download, with automatic fallback for related resources.
+
         1. Check and get the specified plugin version, confirm version compatibility.
         2. Get the file list from GitHub (including requirements.txt).
         3. Delete the old plugin directory (backup if not a forced installation).
@@ -517,7 +504,9 @@ class PluginHelper(metaclass=WeakSingleton):
         6. Attempt to install dependencies again (to ensure complete installation).
         :param pid: Plugin ID
         :param repo_url: Plugin repository address
-        :param force_install: Whether to force install the plugin. Disabled by default, no backup or restore operations are performed when enabled.
+        :param force_install: Whether to install the plugin forcibly. Disabled by
+                              default, no backup or restore operations are performed
+                              when enabled.
         :return: (Success status, error message)
         """
 
@@ -557,7 +546,8 @@ class PluginHelper(metaclass=WeakSingleton):
             if not plugin_version:
                 return (
                     False,
-                    f"Version number for {pid} not found in plugin manifest, unable to perform Release installation",
+                    f"Version number for {pid} not found in plugin manifest, unable to "
+                    f"perform Release installation",
                 )
             # Concatenate release_tag
             release_tag = f"{pid}_v{plugin_version}"
@@ -596,12 +586,16 @@ class PluginHelper(metaclass=WeakSingleton):
         pyproject_path = target_path / self._pyproject
         if pyproject_path.exists():
             logger.info(
-                f"pyproject.toml detected, creating virtual environment and installing dependencies for {pid}..."
+                f"pyproject.toml detected, creating virtual environment and installing "
+                f"dependencies for {pid}..."
             )
             try:
                 uv_path = settings.UV_PATH
                 if not uv_path.exists():
-                    err_msg = "uv command not found, please ensure uv is installed and in PATH environment variable"
+                    err_msg = (
+                        "uv command not found, please ensure uv is "
+                        "installed and in PATH environment variable"
+                    )
                     logger.error(err_msg)
                     return False, err_msg
 
@@ -615,7 +609,10 @@ class PluginHelper(metaclass=WeakSingleton):
                 )
                 _, stderr_venv = await process_venv.communicate()
                 if process_venv.returncode != 0:
-                    err_msg = f"Failed to create virtual environment for plugin {pid}: {stderr_venv.decode()}"
+                    err_msg = (
+                        f"Failed to create virtual environment for plugin "
+                        f"{pid}: {stderr_venv.decode()}"
+                    )
                     logger.error(err_msg)
 
                     return False, err_msg
@@ -633,7 +630,10 @@ class PluginHelper(metaclass=WeakSingleton):
                 )
                 _, stderr_install = await process_install.communicate()
                 if process_install.returncode != 0:
-                    err_msg = f"Failed to install dependencies for plugin {pid}: {stderr_install.decode()}"
+                    err_msg = (
+                        f"Failed to install dependencies for plugin "
+                        f"{pid}: {stderr_install.decode()}"
+                    )
                     logger.error(err_msg)
                     return False, err_msg
                 logger.info(f"Dependencies for plugin {pid} installed successfully.")
@@ -650,9 +650,8 @@ class PluginHelper(metaclass=WeakSingleton):
         prepare_content: Callable[[], Awaitable[tuple[bool, str]]],
         repo_url: str | None = None,
     ) -> tuple[bool, str]:
-        """
-        Asynchronous installation flow, handling plugin content preparation, dependency installation, and registration.
-        """
+        """Asynchronous installation flow, handling plugin content preparation,
+        dependency installation, and registration."""
         backup_dir = None
         if not force_install:
             backup_dir = await self.__async_backup_plugin(pid)
@@ -670,7 +669,8 @@ class PluginHelper(metaclass=WeakSingleton):
             else:
                 await self.__async_remove_old_plugin(pid)
                 logger.warning(
-                    f"{pid} Corresponding plugin directory has been cleaned, please try to reinstall"
+                    f"{pid} Corresponding plugin directory has been cleaned, "
+                    f"please try to reinstall"
                 )
             return False, message
 
@@ -687,9 +687,8 @@ class PluginHelper(metaclass=WeakSingleton):
     async def __prepare_content_via_filelist_async(
         self, pid: str, user_repo: str
     ) -> tuple[bool, str]:
-        """
-        Asynchronously prepares plugin content, getting plugin files and dependencies via the file list.
-        """
+        """Asynchronously prepares plugin content, getting plugin files and dependencies
+        via the file list."""
         file_list, msg = await self.__async_get_file_list(pid, user_repo)
         if not file_list:
             return False, msg
@@ -701,9 +700,10 @@ class PluginHelper(metaclass=WeakSingleton):
     async def __async_install_from_release(
         self, pid: str, user_repo: str, release_tag: str
     ) -> tuple[bool, str]:
-        """
-        Installs a plugin from a GitHub Release asset file (asynchronously).
-        Specification: The release contains an asset named "{aid}_v{version}.zip", where the zip root is the plugin files;
+        """Installs a plugin from a GitHub Release asset file (asynchronously).
+
+        Specification: The release contains an asset named "{aid}_v{version}.zip",
+        where the zip root is the plugin files;
         Extract all of them to app/addons/{aid}
         """
         # 拼接资产文件名
@@ -716,7 +716,9 @@ class PluginHelper(metaclass=WeakSingleton):
         if rel_res is None or rel_res.status_code != 200:
             return (
                 False,
-                f"Failed to get Release information: {rel_res.status_code if rel_res else 'Connection failed'}",
+                f"Failed to get Release information: {
+                    rel_res.status_code if rel_res else 'Connection failed'
+                }",
             )
 
         try:
@@ -743,7 +745,9 @@ class PluginHelper(metaclass=WeakSingleton):
         if res is None or res.status_code != 200:
             return (
                 False,
-                f"Failed to download asset: {res.status_code if res else 'Connection failed'}",
+                f"Failed to download asset: {
+                    res.status_code if res else 'Connection failed'
+                }",
             )
 
         try:
@@ -791,7 +795,8 @@ class PluginHelper(metaclass=WeakSingleton):
     @staticmethod
     def process_plugins_list(base_version_plugins: list[Addon]) -> list[Addon]:
         """
-        Processes the plugin list: merges, de-duplicates, sorts, and keeps the highest version.
+        Processes the plugin list: merges, deduplicates, sorts, and keeps the highest
+        version.
         :param base_version_plugins: List of base version plugins
         :return: Processed plugin list
         """

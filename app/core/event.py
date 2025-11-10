@@ -59,8 +59,10 @@ class Event:
         """Overrides the __repr__ method to return detailed event information, including
         event type, event ID, and priority."""
         event_kind = Event.get_event_kind(self.event_type)
-        return (f"<{event_kind}: {self.event_type.value}, ID: {self.event_id}, "
-                f"Priority: {self.priority}>")
+        return (
+            f"<{event_kind}: {self.event_type.value}, ID: {self.event_id}, "
+            f"Priority: {self.priority}>"
+        )
 
     def __lt__(self, other):
         """Defines the comparison rule for event objects based on priority.

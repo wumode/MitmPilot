@@ -80,19 +80,22 @@ class HttpFlowMatcher:
                     # Convert wildcard to regex
                     payload = rule.payload
                     if payload.startswith("*."):
-                        # *.baidu.com matches tieba.baidu.com but not 123.tieba.baidu.com or baidu.com
+                        # *.baidu.com matches tieba.baidu.com
+                        # but not 123.tieba.baidu.com or baidu.com
                         # So, it should match one level of subdomain.
                         # The regex should be something like `^[^\.]+\.baidu\.com$`
                         domain = payload[2:]
                         pattern = r"^[^\.]+\." + re.escape(domain) + "$"
                         return re.match(pattern, flow.request.pretty_host) is not None
                     elif payload.startswith("+."):
-                        # +.baidu.com matches tieba.baidu.com, 123.tieba.baidu.com, and baidu.com
+                        # +.baidu.com matches tieba.baidu.com, 123.tieba.baidu.com,
+                        # and baidu.com
                         # This is similar to DOMAIN-SUFFIX
                         domain = payload[2:]
                         return flow.request.pretty_host.endswith(domain)
                     elif payload.startswith("."):
-                        # .baidu.com matches tieba.baidu.com and 123.tieba.baidu.com, but does not match baidu.com
+                        # .baidu.com matches tieba.baidu.com and 123.tieba.baidu.com,
+                        # but does not match baidu.com
                         domain = payload[1:]
                         return (
                             flow.request.pretty_host.endswith(domain)
