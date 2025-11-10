@@ -50,8 +50,10 @@ class ClashRuleParser:
                 ]
                 conditions_str = ",".join(conditions)
                 conditions_str = f"({conditions_str})"
-                raw_rule = (f"{clash_rule.get('type')},{conditions_str},"
-                            f"{clash_rule.get('action')}")
+                raw_rule = (
+                    f"{clash_rule.get('type')},{conditions_str},"
+                    f"{clash_rule.get('action')}"
+                )
                 rule = ClashRuleParser._parse_logic_rule(raw_rule)
             elif clash_rule.get("type") == "MATCH":
                 raw_rule = f"{clash_rule.get('type')},{clash_rule.get('action')}"
@@ -62,12 +64,16 @@ class ClashRuleParser:
                     return None
                 condition_str = f"({condition})"
                 condition_str = ClashRuleParser._remove_parenthesis(condition_str)
-                raw_rule = (f"{clash_rule.get('type')},{condition_str},"
-                            f"{clash_rule.get('action')}")
+                raw_rule = (
+                    f"{clash_rule.get('type')},{condition_str},"
+                    f"{clash_rule.get('action')}"
+                )
                 rule = ClashRuleParser._parse_sub_rule(raw_rule)
             else:
-                raw_rule = (f"{clash_rule.get('type')},{clash_rule.get('payload')},"
-                            f"{clash_rule.get('action')}")
+                raw_rule = (
+                    f"{clash_rule.get('type')},{clash_rule.get('payload')},"
+                    f"{clash_rule.get('action')}"
+                )
                 if clash_rule.get("additional_params"):
                     raw_rule += f",{clash_rule.get('additional_params')}"
                 rule = ClashRuleParser._parse_regular_rule(raw_rule)
@@ -347,3 +353,18 @@ class ClashRuleParser:
 
         except Exception:
             return False
+
+    @staticmethod
+    def valid_rule_for_provider(
+        rule: ClashRule | LogicRule | SubRule | MatchRule,
+    ) -> bool:
+        if isinstance(rule, SubRule) or isinstance(rule, MatchRule):
+            return False
+        if isinstance(rule, ClashRule):
+            if rule.rule_type == RoutingRuleType.RULE_SET:
+                return False
+            return True
+        for condition in rule.conditions:
+            if not ClashRuleParser.valid_rule_for_provider(condition):
+                return False
+        return True

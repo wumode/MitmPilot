@@ -45,22 +45,29 @@ class _AddonBase(metaclass=ABCMeta):
         """Get addon running status."""
         pass
 
-    @abstractmethod
     def get_hooks(self) -> dict[HookEventType, list[HookData]]:
-        pass
+        """Get addon hooks."""
+        raise NotImplementedError
+
+    def get_clash_rules(self) -> list[str]:
+        """Get addon rules.
+
+        :return: The Clash rules that the addon expects to intercept traffic.
+                 Example: ['DOMAIN-SUFFIX,baidu.com', 'DOMAIN,www.google.com']
+        """
+        raise NotImplementedError
 
     @staticmethod
     def get_render_mode() -> AddonRenderMode:
-        """Get addon rendering mode :return: 1.
+        """Get addon rendering mode :return: Rendering mode.
 
-        Rendering mode, supports: vue/vuetify, default is vuetify
+        Vue/vuetify, default is vuetify
         """
         return AddonRenderMode.vuetify
 
-    @abstractmethod
     def get_api(self) -> list[AddonApi]:
         """Register addon API."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def get_form(self) -> tuple[list[dict] | None, dict[str, Any]]:
@@ -69,12 +76,11 @@ class _AddonBase(metaclass=ABCMeta):
         The addon configuration page
         is assembled using Vuetify components, refer to: https://vuetifyjs.com/
         :return:
-            1. Page configuration (vuetify mode) or None (vue mode);
-            2. Default data structure
+            - Page configuration (vuetify mode) or None (vue mode);
+            - Default data structure
         """
         pass
 
-    @abstractmethod
     def get_page(self) -> list[dict] | None:
         """
         Assemble the addon details page, need to return the page configuration with data
@@ -82,14 +88,12 @@ class _AddonBase(metaclass=ABCMeta):
         refer to: https://vuetifyjs.com/
         :return: Page configuration (vuetify mode) or None (vue mode)
         """
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def get_service(self) -> list[AddonService]:
         """Register addon public services."""
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def get_dashboard(self, key: str, **kwargs) -> Dashboard | None:
         """
         Get the addon dashboard page, need to return:
@@ -101,9 +105,8 @@ class _AddonBase(metaclass=ABCMeta):
         :param key: Dashboard key, return the corresponding dashboard data according
         to the specified key
         """
-        pass
+        raise NotImplementedError
 
-    @abstractmethod
     def get_dashboard_meta(self) -> list[dict[str, str]] | None:
         """
         Get addon dashboard meta-information
@@ -117,7 +120,7 @@ class _AddonBase(metaclass=ABCMeta):
                 "name": "Dashboard 2"
             }]
         """
-        pass
+        raise NotImplementedError
 
     def get_name(self) -> str:
         """Get addon name :return: The addon name."""

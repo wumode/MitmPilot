@@ -5,17 +5,19 @@ from pathlib import Path
 from typing import Annotated
 
 import aiofiles
+import yaml
 from anyio import Path as AsyncPath
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, Request, Response
-from fastapi.responses import StreamingResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
 from PIL import Image
 
 from app import schemas
 from app.chain.system import SystemChain
 from app.core.cache import AsyncFileCache
 from app.core.config import global_vars, settings
+from app.core.ctx import Context
 from app.core.event import eventmanager
-from app.core.security import verify_resource_token, verify_token
+from app.core.security import verify_apikey, verify_resource_token, verify_token
 from app.db.models import User
 from app.db.systemconfig_oper import SystemConfigOper
 from app.db.user_oper import (
@@ -424,10 +426,10 @@ async def proxy_img(
 
 
 @router.get(
-    "/versions", summary="查询Github所有Release版本", response_model=schemas.Response
+    "/versions", summary="Query all release versions of Github", response_model=schemas.Response
 )
-async def latest_version(_: schemas.TokenPayload = Depends(verify_token)):  # noqa: B008
-    """查询Github所有Release版本."""
+async def latest_version(_: schemas.TokenPayload = Depends(verify_token)):  # noqa: B-008
+    """Query all release versions of Github."""
     version_res = await AsyncRequestUtils(
         proxies=settings.PROXY, headers=settings.GITHUB_HEADERS
     ).get_res("https://api.github.com/repos/wumode/MitmPilot/releases")
@@ -436,3 +438,10 @@ async def latest_version(_: schemas.TokenPayload = Depends(verify_token)):  # no
         if ver_json:
             return schemas.Response(success=True, data=ver_json)
     return schemas.Response(success=False)
+
+
+@router.get("rules", summary="Clash rules")
+def get_rules(_: schemas.TokenPayload = Depends(verify_apikey)) -> PlainTextResponse:  # noqa: B008
+    rules = Context.addonmanager.get_addon_rules()
+    res = yaml.dump({"payload": rules}, allow_unicode=True)
+    return PlainTextResponse(content=res, media_type="application/x-yaml")

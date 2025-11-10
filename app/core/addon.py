@@ -202,7 +202,7 @@ class AddonManager(metaclass=Singleton):
         self._async_hook_chain.remove_hooks_by_id(aid)
 
     def register_addon(self, aid: str | None = None):
-        """注册插件到 mitmproxy."""
+        """Register addon to mitmproxy."""
         if aid is None:
             addons = [*self._running_addons]
         else:
@@ -212,7 +212,7 @@ class AddonManager(metaclass=Singleton):
         Context.mitmmanager.add_addons(*addons)
 
     def deregister_addon(self, aid: str | None = None):
-        """从 mitmproxy 移除插件."""
+        """Remove addon from mitmproxy."""
         if aid is None:
             addons = [*self._running_addons]
         else:
@@ -276,7 +276,7 @@ class AddonManager(metaclass=Singleton):
     def get_addon_services(self, aid: str | None = None) -> list[AddonService]:
         """Retrieves plugin services."""
         ret_services: list[AddonService] = []
-        # 创建字典快照避免并发修改
+        # Create a dictionary snapshot to avoid concurrent modification
         running_addons_snapshot = dict(self._running_addons)
         for addon_id, addon in running_addons_snapshot.items():
             if aid and aid != addon_id:
@@ -336,9 +336,9 @@ class AddonManager(metaclass=Singleton):
         return ret_modules
 
     def get_plugin_dashboard_meta(self) -> list[dict[str, str]]:
-        """获取所有插件仪表盘元信息."""
+        """Get all plugin dashboard meta information."""
         dashboard_meta = []
-        # 创建字典快照避免并发修改
+        # Create a dictionary snapshot to avoid concurrent modification
         running_plugins_snapshot = dict(self._running_addons)
         for plugin_id, plugin in running_plugins_snapshot.items():
             if not hasattr(plugin, "get_dashboard") or not ObjectUtils.check_method(
@@ -348,7 +348,7 @@ class AddonManager(metaclass=Singleton):
             try:
                 if not plugin.get_state():
                     continue
-                # 如果是多仪表盘实现
+                # If it is a multi-dashboard implementation
                 if hasattr(plugin, "get_dashboard_meta") and ObjectUtils.check_method(
                     plugin.get_dashboard_meta
                 ):
@@ -374,26 +374,26 @@ class AddonManager(metaclass=Singleton):
                         }
                     )
             except Exception as e:
-                logger.error(f"获取插件[{plugin_id}]仪表盘元数据出错：{str(e)}")
+                logger.error(f"Error getting plugin [{plugin_id}] dashboard meta data: {str(e)}")
         return dashboard_meta
 
     def get_plugin_dashboard(
         self, pid: str, key: str, user_agent: str = None
     ) -> schemas.AddonDashboard | None:
-        """获取插件仪表盘."""
+        """Get plugin dashboard."""
 
-        # 获取插件实例
+        # Get plugin instance
         plugin_instance = self.running_addons.get(pid)
         if not plugin_instance:
             return None
 
-        # 渲染模式
+        # Render mode
         render_mode = plugin_instance.get_render_mode()
-        # 获取插件仪表板
+        # Get plugin dashboard
         try:
             dashboard = plugin_instance.get_dashboard(key=key, user_agent=user_agent)
         except Exception as e:
-            logger.error(f"插件 {pid} 调用方法 get_dashboard 出错: {str(e)}")
+            logger.error(f"Plugin {pid} failed to call method get_dashboard: {str(e)}")
             return None
         if dashboard is None:
             return None
@@ -707,7 +707,7 @@ class AddonManager(metaclass=Singleton):
 
         :param addon_id: Plugin ID
         """
-        # 先移除插件实例
+        # Remove the plugin instance first
         self.stop_addon(addon_id)
         addons = AddonManager._load_selective_addons(
             addon_id, [addon_id], AddonManager.check_module
@@ -715,9 +715,9 @@ class AddonManager(metaclass=Singleton):
         for addon in addons:
             addon_id = addon.__name__
             self._addons[addon_id] = addon
-        # 重新加载
+        # Reload
         self.start_addon(addon_id)
-        # 广播事件
+        # Broadcast event
         eventmanager.send_event(EventType.AddonReload, data={"addon_id": addon_id})
 
     @staticmethod
@@ -737,7 +737,7 @@ class AddonManager(metaclass=Singleton):
     def get_addon_remotes(self, aid: str | None = None) -> list[dict[str, Any]]:
         """Retrieves the list of plugin federation components."""
         remotes = []
-        # 创建字典快照避免并发修改
+        # Create a dictionary snapshot to avoid concurrent modification
         running_addons_snapshot = dict(self._running_addons)
         for addon_id, addon in running_addons_snapshot.items():
             if aid and aid != addon_id:
@@ -754,6 +754,22 @@ class AddonManager(metaclass=Singleton):
                     }
                 )
         return remotes
+
+    def get_addon_rules(self) -> list[str]:
+        rules = []
+        running_addons_snapshot = dict(self._running_addons)
+        for aid, addon in running_addons_snapshot.items():
+            if ObjectUtils.check_method(addon.get_clash_rules):
+                for rule in addon.get_clash_rules():
+                    condition_string = f"{rule},{Action.COMPATIBLE}"
+                    parsed = ClashRuleParser.parse_rule_line(condition_string)
+                    if not parsed or not ClashRuleParser.valid_rule_for_provider(
+                        parsed
+                    ):
+                        logger.warn(f"Invalid rule {aid}:{rule}")
+                        continue
+                    rules.append(parsed.condition_string())
+        return rules
 
     @property
     def running_addons(self) -> dict[str, _AddonBase]:
