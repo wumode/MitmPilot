@@ -1,10 +1,10 @@
 # MitmPilot
 
-MitmPilot 是一个用于运行、管理和分享 [mitmproxy](https.://www.mitmproxy.org/) 插件的 Python 项目。
+MitmPilot 是一个 [mitmproxy](https://www.mitmproxy.org/) 的管理和扩展平台，它提供了一个基于 Web 的界面和插件架构，用于运行、管理和分享 mitmproxy 插件。它将 mitmproxy 从一个命令行工具转变为一个具有远程管理能力的可扩展服务。
 
 ## 主要特性
 
-- **插件管理**: 轻松加载、卸载和在线安装 mitmproxy 插件。
+- **Mitmproxy 集成**: 内嵌 mitmproxy 实例，并提供插件生命周期管理。
 - **Web 界面**: 基于 FastAPI 提供了一个用户友好的 Web 界面来管理和监控插件。
 - **Hook 路由**: 灵活的 Hook 机制，支持根据规则动态匹配和执行插件。
 - **可扩展性**: 设计上易于扩展，可以方便地添加新功能和模块。

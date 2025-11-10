@@ -16,11 +16,11 @@ from app.schemas.rule import (
 
 
 class ClashRuleParser:
-    """Parser for Clash routing rules"""
+    """Parser for Clash routing rules."""
 
     @staticmethod
     def parse_rule_line(line: str) -> RuleType | None:
-        """Parse a single rule line"""
+        """Parse a single rule line."""
         line = line.strip()
         try:
             # Handle logic rules (AND, OR, NOT)
@@ -50,7 +50,8 @@ class ClashRuleParser:
                 ]
                 conditions_str = ",".join(conditions)
                 conditions_str = f"({conditions_str})"
-                raw_rule = f"{clash_rule.get('type')},{conditions_str},{clash_rule.get('action')}"
+                raw_rule = (f"{clash_rule.get('type')},{conditions_str},"
+                            f"{clash_rule.get('action')}")
                 rule = ClashRuleParser._parse_logic_rule(raw_rule)
             elif clash_rule.get("type") == "MATCH":
                 raw_rule = f"{clash_rule.get('type')},{clash_rule.get('action')}"
@@ -61,10 +62,12 @@ class ClashRuleParser:
                     return None
                 condition_str = f"({condition})"
                 condition_str = ClashRuleParser._remove_parenthesis(condition_str)
-                raw_rule = f"{clash_rule.get('type')},{condition_str},{clash_rule.get('action')}"
+                raw_rule = (f"{clash_rule.get('type')},{condition_str},"
+                            f"{clash_rule.get('action')}")
                 rule = ClashRuleParser._parse_sub_rule(raw_rule)
             else:
-                raw_rule = f"{clash_rule.get('type')},{clash_rule.get('payload')},{clash_rule.get('action')}"
+                raw_rule = (f"{clash_rule.get('type')},{clash_rule.get('payload')},"
+                            f"{clash_rule.get('action')}")
                 if clash_rule.get("additional_params"):
                     raw_rule += f",{clash_rule.get('additional_params')}"
                 rule = ClashRuleParser._parse_regular_rule(raw_rule)
@@ -80,7 +83,7 @@ class ClashRuleParser:
         if len(parts) < 2:
             raise ValueError(f"Invalid rule format: {line}")
         action = parts[1].strip()
-        # Validate rule type
+        # Validate the rule type
         try:
             action_enum = Action(action.upper())
             final_action = action_enum
@@ -91,7 +94,7 @@ class ClashRuleParser:
 
     @staticmethod
     def _parse_regular_rule(line: str) -> ClashRule:
-        """Parse a regular (non-logic) rule"""
+        """Parse a regular (non-logic) rule."""
         parts = line.split(",")
 
         if len(parts) < 3 or len(parts) > 4:
@@ -106,7 +109,7 @@ class ClashRuleParser:
 
         additional_params = parts[3].strip() if len(parts) > 3 else None
 
-        # Validate rule type
+        # Validate the rule type
         try:
             rule_type = RoutingRuleType(rule_type_str)
         except ValueError as err:
@@ -131,7 +134,7 @@ class ClashRuleParser:
 
     @staticmethod
     def _parenthesis_balance(s: str) -> int | None:
-        """Calculate balance of parenthesis"""
+        """Calculate the balance of parenthesis."""
         balance = 0
         for _i, char in enumerate(s):
             if char == "(":
@@ -154,7 +157,8 @@ class ClashRuleParser:
         action_str = rest[last_comma_index + 1 :]
         conditions_str = rest[:last_comma_index]
 
-        # Find the matching parenthesis for the conditions block to separate conditions from action
+        # Find the matching parenthesis for the conditions block to separate conditions
+        # from action
         balance = ClashRuleParser._parenthesis_balance(conditions_str)
         if balance != 0:
             raise ValueError(f"Mismatched parentheses in logic rule: {line}")
@@ -178,7 +182,7 @@ class ClashRuleParser:
 
     @staticmethod
     def _parse_sub_rule(line: str) -> SubRule:
-        """Parse a sub-rule"""
+        """Parse a sub-rule."""
         rule_type_str, rest = line.split(",", 1)
         rule_type = RoutingRuleType(rule_type_str.upper().strip())
         if rule_type != RoutingRuleType.SUB_RULE:
@@ -222,8 +226,8 @@ class ClashRuleParser:
 
     @staticmethod
     def _parse_logic_conditions(conditions_str: str) -> list[ClashRule | LogicRule]:
-        """
-        Parse conditions within logic rules, supporting nested logic.
+        """Parse conditions within logic rules, supporting nested logic.
+
         examples of conditions_str:
             (DOMAIN,baidu.com)
             (AND,(DOMAIN,baidu.com),(NETWORK,TCP))
@@ -286,7 +290,7 @@ class ClashRuleParser:
                         condition = ClashRule(
                             rule_type=rule_type,
                             payload=payload.strip(),
-                            action=Action.COMPATIBLE,  # Logic conditions don't have actions
+                            action=Action.COMPATIBLE,
                             raw_rule=content,
                         )
                         conditions.append(condition)
@@ -300,7 +304,7 @@ class ClashRuleParser:
 
     @staticmethod
     def parse_rules(rules_text: str) -> list[ClashRule | LogicRule | MatchRule]:
-        """Parse multiple rules from text, preserving order and priority"""
+        """Parse multiple rules from text, preserving order and priority."""
         rules = []
         lines = rules_text.strip().split("\n")
 
@@ -313,9 +317,9 @@ class ClashRuleParser:
 
     @staticmethod
     def validate_rule(rule: ClashRule) -> bool:
-        """Validate a parsed rule"""
+        """Validate a parsed rule."""
         try:
-            # Basic validation based on rule type
+            # Basic validation based on the rule type
             if rule.rule_type in [RoutingRuleType.IP_CIDR, RoutingRuleType.IP_CIDR6]:
                 # Validate CIDR format
                 return "/" in rule.payload
@@ -328,7 +332,7 @@ class ClashRuleParser:
                 return rule.payload.isdigit() or "-" in rule.payload
 
             elif rule.rule_type == RoutingRuleType.NETWORK:
-                # Validate network type
+                # Validate the network type
                 return rule.payload.lower() in ["tcp", "udp"]
 
             elif (

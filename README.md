@@ -1,10 +1,10 @@
 # MitmPilot
 
-MitmPilot is a Python project for running, managing, and sharing [mitmproxy](https://www.mitmproxy.org/) addons.
+MitmPilot is a management and extension platform for [mitmproxy](https://www.mitmproxy.org/), providing a web-based interface and plugin architecture for running, managing, and sharing mitmproxy addons. It transforms mitmproxy from a command-line tool into an extensible service with remote management capabilities.
 
 ## Main Features
 
-- **Addon Management**: Easily load, unload, and install mitmproxy addons online.
+- **Mitmproxy Integration**: Embedded mitmproxy instance with plugin lifecycle management.
 - **Web Interface**: Provides a user-friendly web interface based on FastAPI to manage and monitor addons.
 - **Hook Routing**: Flexible hook mechanism, supporting dynamic matching and execution of plugins based on rules.
 - **Extensibility**: Designed for easy extension, allowing new features and modules to be added conveniently.
