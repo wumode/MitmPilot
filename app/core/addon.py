@@ -374,7 +374,9 @@ class AddonManager(metaclass=Singleton):
                         }
                     )
             except Exception as e:
-                logger.error(f"Error getting plugin [{plugin_id}] dashboard meta data: {str(e)}")
+                logger.error(
+                    f"Error getting plugin [{plugin_id}] dashboard meta data: {str(e)}"
+                )
         return dashboard_meta
 
     def get_plugin_dashboard(

@@ -2,15 +2,13 @@ from collections.abc import Callable, Iterator
 from typing import Any, Literal
 
 from apscheduler.triggers.base import BaseTrigger
-from pydantic import BaseModel, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 from app.schemas.types import AddonRenderMode
 
 
 class Addon(BaseModel):
-    """
-    Addon information
-    """
+    """Addon information."""
 
     # Addon ID
     addon_id: str
@@ -76,6 +74,7 @@ class AddonApi(BaseModel):
 
 
 class AddonService(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     # Service ID
     id: str
     # Service name
@@ -88,9 +87,6 @@ class AddonService(BaseModel):
     kwargs: dict = Field(default_factory=dict)
     # Method parameters
     func_kwargs: dict = Field(default_factory=dict)
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class DashboardAttrs(BaseModel):
@@ -122,9 +118,7 @@ class Dashboard(BaseModel):
 
 
 class AddonDashboard(Dashboard):
-    """
-    Addon dashboard
-    """
+    """Addon dashboard."""
 
     # addon id
     id: str

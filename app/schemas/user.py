@@ -1,8 +1,10 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # Shared properties
 class UserBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     # 用户名
     name: str
     # 邮箱，未启用
@@ -19,9 +21,6 @@ class UserBase(BaseModel):
     permissions: dict | None = Field(default_factory=dict)
     # 个性化设置
     settings: dict | None = Field(default_factory=dict)
-
-    class Config:
-        from_attributes = True
 
 
 # Properties to receive via API on creation

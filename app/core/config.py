@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Literal
 
 from dotenv import set_key
-from pydantic import BaseModel, Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.log import log_settings, logger
 from app.utils.system import SystemUtils
@@ -29,8 +29,7 @@ class SystemConfModel(BaseModel):
 
 
 class ConfigModel(BaseModel):
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
     CONFIG_DIR: str | None = None
 
@@ -173,10 +172,11 @@ class ConfigModel(BaseModel):
 
 
 class Settings(BaseSettings, ConfigModel):
-    class Config:
-        case_sensitive = True
-        env_file = SystemUtils.get_env_path()
-        env_file_encoding = "utf-8"
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=SystemUtils.get_env_path(),
+        env_file_encoding="utf-8",
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -472,12 +472,13 @@ settings = Settings()
 
 
 class MitmOpts(BaseSettings):
-    class Config:
-        case_sensitive = True
-        env_file = SystemUtils.get_env_path()
-        env_file_encoding = "utf-8"
-        env_prefix = "MITMOPTS_"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=SystemUtils.get_env_path(),
+        env_file_encoding="utf-8",
+        env_prefix="MITMOPTS_",
+        extra="ignore",
+    )
 
     # Add all certificates of the upstream server to the certificate chain.
     ADD_UPSTREAM_CERTS_TO_CLIENT_CHAIN: bool = False

@@ -337,7 +337,8 @@ async def get_logging(
 
             # Real-time monitoring of new logs
             async with aiofiles.open(log_path, encoding="utf-8", errors="ignore") as f:
-                # Move the file pointer to the end of the file and continue to monitor new content
+                # Move the file pointer to the end of the file and continue to monitor
+                # new content
                 await f.seek(0, 2)
                 # Record the initial file size
                 initial_stat = await log_path.stat()
@@ -426,10 +427,12 @@ async def proxy_img(
 
 
 @router.get(
-    "/versions", summary="Query all release versions of Github", response_model=schemas.Response
+    "/versions",
+    summary="Query all release versions of Github",
+    response_model=schemas.Response,
 )
-async def latest_version(_: schemas.TokenPayload = Depends(verify_token)):  # noqa: B-008
-    """Query all release versions of Github."""
+async def latest_version(_: schemas.TokenPayload = Depends(verify_token)):  # noqa: B008
+    """Query all release versions from GitHub."""
     version_res = await AsyncRequestUtils(
         proxies=settings.PROXY, headers=settings.GITHUB_HEADERS
     ).get_res("https://api.github.com/repos/wumode/MitmPilot/releases")

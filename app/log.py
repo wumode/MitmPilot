@@ -11,19 +11,17 @@ from pathlib import Path
 from typing import Any
 
 import click
-from pydantic import BaseModel
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.utils.system import SystemUtils
 
 
 class LogConfigModel(BaseModel):
-    """
-    Pydantic configuration model describing all configuration items, their types, and default values.
-    """
+    """Pydantic configuration model describing all configuration items, their types, and
+    default values."""
 
-    class Config:
-        extra = "ignore"  # Ignore undefined configuration items
+    model_config = ConfigDict(extra="ignore")
 
     # Configuration file directory
     CONFIG_DIR: str | None = None
@@ -50,9 +48,13 @@ class LogConfigModel(BaseModel):
 
 
 class LogSettings(BaseSettings, LogConfigModel):
-    """
-    Log settings class.
-    """
+    """Log settings class."""
+
+    model_config = SettingsConfigDict(
+        case_sensitive=True,
+        env_file=SystemUtils.get_env_path(),
+        env_file_encoding="utf-8",
+    )
 
     @property
     def CONFIG_PATH(self):
@@ -60,22 +62,13 @@ class LogSettings(BaseSettings, LogConfigModel):
 
     @property
     def LOG_PATH(self):
-        """
-        Gets the log storage path.
-        """
+        """Gets the log storage path."""
         return self.CONFIG_PATH / "logs"
 
     @property
     def LOG_MAX_FILE_SIZE_BYTES(self):
-        """
-        Converts the log file size to bytes (MB -> Bytes).
-        """
+        """Converts the log file size to bytes (MB -> Bytes)."""
         return self.LOG_MAX_FILE_SIZE * 1024 * 1024
-
-    class Config:
-        case_sensitive = True
-        env_file = SystemUtils.get_env_path()
-        env_file_encoding = "utf-8"
 
 
 # Instantiate log settings
@@ -92,9 +85,7 @@ level_name_colors = {
 
 
 class CustomFormatter(logging.Formatter):
-    """
-    Custom log output format.
-    """
+    """Custom log output format."""
 
     def __init__(self, fmt=None):
         super().__init__(fmt)
@@ -108,9 +99,7 @@ class CustomFormatter(logging.Formatter):
 
 
 class LogEntry:
-    """
-    Log entry.
-    """
+    """Log entry."""
 
     def __init__(
         self, level: str, message: str, file_path: Path, timestamp: datetime = None
@@ -153,9 +142,7 @@ class NonBlockingFileHandler:
         self._write_thread.start()
 
     def _get_rotating_handler(self, file_path: Path) -> RotatingFileHandler:
-        """
-        Gets or creates a RotatingFileHandler instance.
-        """
+        """Gets or creates a RotatingFileHandler instance."""
         if file_path not in self._rotating_handlers:
             # Ensure the directory exists
             file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,9 +179,7 @@ class NonBlockingFileHandler:
 
     @staticmethod
     def _is_in_event_loop() -> bool:
-        """
-        Detects if currently in an event loop.
-        """
+        """Detects if currently in an event loop."""
         try:
             loop = asyncio.get_running_loop()
             return loop is not None
@@ -202,9 +187,7 @@ class NonBlockingFileHandler:
             return False
 
     def _write_non_blocking(self, entry: LogEntry):
-        """
-        Non-blocking write (for coroutine environments).
-        """
+        """Non-blocking write (for coroutine environments)."""
         try:
             self._write_queue.put_nowait(entry)
         except queue.Full:
@@ -213,9 +196,7 @@ class NonBlockingFileHandler:
 
     @staticmethod
     def _write_sync(entry: LogEntry):
-        """
-        Synchronously writes a log.
-        """
+        """Synchronously writes a log."""
         try:
             # Get the RotatingFileHandler instance
             handler = NonBlockingFileHandler()._get_rotating_handler(entry.file_path)
@@ -238,9 +219,7 @@ class NonBlockingFileHandler:
             print(f"【{entry.level.upper()}】{entry.timestamp} - {entry.message}")
 
     def _batch_writer(self):
-        """
-        Background batch writer thread.
-        """
+        """Background batch writer thread."""
         while self._running:
             try:
                 # Collect a batch of log entries
@@ -266,9 +245,7 @@ class NonBlockingFileHandler:
                 time.sleep(0.1)
 
     def _write_batch(self, batch: list):
-        """
-        Writes logs in batches.
-        """
+        """Writes logs in batches."""
         # Group by file
         file_groups = {}
         for entry in batch:
@@ -303,9 +280,7 @@ class NonBlockingFileHandler:
                     self._write_sync(entry)
 
     def shutdown(self):
-        """
-        Shuts down the file handler.
-        """
+        """Shuts down the file handler."""
         self._running = False
         if hasattr(self, "_write_thread"):
             self._write_thread.join(timeout=5)
@@ -317,9 +292,7 @@ class NonBlockingFileHandler:
 
 
 class LoggerManager:
-    """
-    Log management.
-    """
+    """Log management."""
 
     # Manages all Loggers
     _loggers: dict[str, Any] = {}
@@ -331,8 +304,8 @@ class LoggerManager:
     _file_handler = NonBlockingFileHandler()
 
     def get_logger(self, name: str) -> logging.Logger:
-        """
-        Gets an independent logger with a specified name.
+        """Gets an independent logger with a specified name.
+
         Creates a separate log file, e.g., 'diag_memory.log'.
         :param name: The name of the logger, which will also be used as the filename.
         :return: A configured logging.Logger instance.
@@ -350,9 +323,10 @@ class LoggerManager:
 
     @staticmethod
     def __get_caller():
-        """
-        Gets the caller's file name and plugin name.
-        If a plugin calls a built-in module, it can also be written to the plugin's log file.
+        """Gets the caller's file name and plugin name.
+
+        If a plugin calls a built-in module, it can also be written to the plugin's log
+        file.
         """
         # Caller's file name
         caller_name = None
@@ -403,8 +377,9 @@ class LoggerManager:
 
     @staticmethod
     def __setup_console_logger(log_file: str):
-        """
-        Initializes a console logger instance (file output is handled by NonBlockingFileHandler).
+        """Initializes a console logger instance (file output is handled by
+        NonBlockingFileHandler).
+
         :param log_file: The relative path of the log file.
         """
         log_file_path = log_settings.LOG_PATH / log_file
@@ -431,17 +406,15 @@ class LoggerManager:
         return _logger
 
     def update_loggers(self):
-        """
-        Updates logger instances.
-        """
+        """Updates logger instances."""
         with LoggerManager._lock:
             for _logger in self._loggers.values():
                 self.__update_logger_handlers(_logger)
 
     @staticmethod
     def __update_logger_handlers(_logger: logging.Logger):
-        """
-        Updates the handler configuration of a Logger.
+        """Updates the handler configuration of a Logger.
+
         :param _logger: The Logger instance to be updated.
         """
         # Update existing handlers (only the console handler)
@@ -458,9 +431,7 @@ class LoggerManager:
 
     @staticmethod
     def __get_log_level():
-        """
-        Gets the current log level.
-        """
+        """Gets the current log level."""
         return (
             logging.DEBUG
             if log_settings.DEBUG
@@ -468,8 +439,8 @@ class LoggerManager:
         )
 
     def logger(self, method: str, msg: str, *args, **kwargs):
-        """
-        Gets the logger for a module.
+        """Gets the logger for a module.
+
         :param method: The log method.
         :param msg: The log message.
         """
@@ -520,46 +491,32 @@ class LoggerManager:
             log_method(formatted_msg)
 
     def info(self, msg: str, *args, **kwargs):
-        """
-        Outputs an info level log.
-        """
+        """Outputs an info level log."""
         self.logger("info", msg, *args, **kwargs)
 
     def debug(self, msg: str, *args, **kwargs):
-        """
-        Outputs a debug level log.
-        """
+        """Outputs a debug level log."""
         self.logger("debug", msg, *args, **kwargs)
 
     def warning(self, msg: str, *args, **kwargs):
-        """
-        Outputs a warning level log.
-        """
+        """Outputs a warning level log."""
         self.logger("warning", msg, *args, **kwargs)
 
     def warn(self, msg: str, *args, **kwargs):
-        """
-        Outputs a warning level log (compatible).
-        """
+        """Outputs a warning level log (compatible)."""
         self.warning(msg, *args, **kwargs)
 
     def error(self, msg: str, *args, **kwargs):
-        """
-        Outputs an error level log.
-        """
+        """Outputs an error level log."""
         self.logger("error", msg, *args, **kwargs)
 
     def critical(self, msg: str, *args, **kwargs):
-        """
-        Outputs a critical error level log.
-        """
+        """Outputs a critical error level log."""
         self.logger("critical", msg, *args, **kwargs)
 
     @classmethod
     def shutdown(cls):
-        """
-        Shuts down the logger manager and cleans up resources.
-        """
+        """Shuts down the logger manager and cleans up resources."""
         if cls._file_handler:
             cls._file_handler.shutdown()
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.addon import AddonService
 
@@ -112,11 +112,10 @@ class ConfigChangeEventData(BaseEventData):
 
 
 class AddonServiceRegistration(ChainEventData):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     addon_id: str = Field(..., description="the addon id")
     addon_name: str | None = Field(default=None, description="the addon name")
     services: list[AddonService] = Field(
         default_factory=list, description="services to register"
     )
-
-    class Config:
-        arbitrary_types_allowed = True
