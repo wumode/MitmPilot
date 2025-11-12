@@ -369,7 +369,8 @@ async def _remove_plugin_from_folders(plugin_id: str):
 
     except Exception as e:
         logger.error(f"Error when removing plugin from folder: {str(e)}")
-        # Folder processing failure does not affect the overall process of plugin uninstallation
+        # Folder processing failure does not affect the overall process of plugin
+        # uninstallation
 
 
 @router.get("/installed", summary="Installed plugins", response_model=list[str])

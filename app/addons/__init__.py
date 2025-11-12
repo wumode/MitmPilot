@@ -2,12 +2,26 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Any
 
+from app.chain import ChainBase
 from app.core.config import settings
 from app.core.event import EventManager
 from app.db.addondata_oper import AddonDataOper
 from app.db.systemconfig_oper import SystemConfigOper
-from app.schemas import AddonApi, AddonService, Dashboard, HookData
-from app.schemas.types import AddonRenderMode, HookEventType, SystemConfigKey
+from app.helper.message import MessageHelper
+from app.schemas import AddonApi, AddonService, Dashboard, HookData, Notification
+from app.schemas.types import (
+    AddonRenderMode,
+    HookEventType,
+    MessageChannel,
+    NotificationType,
+    SystemConfigKey,
+)
+
+
+class AddonChian(ChainBase):
+    """插件处理链."""
+
+    pass
 
 
 class _AddonBase(metaclass=ABCMeta):
@@ -31,6 +45,10 @@ class _AddonBase(metaclass=ABCMeta):
         self.addondata = AddonDataOper()
         self.systemconfig = SystemConfigOper()
         self.eventmanager = EventManager()
+        # 处理链
+        self.chain = AddonChian()
+        # 系统消息
+        self.systemmessage = MessageHelper()
 
     @abstractmethod
     def init_addon(self, config: dict = None):
@@ -164,3 +182,71 @@ class _AddonBase(metaclass=ABCMeta):
         if not addon_id:
             addon_id = self.__class__.__name__
         return self.addondata.get_data(addon_id, key)
+
+    def del_data(self, key: str, addon_id: str | None = None) -> Any:
+        """Delete addon date :param key: Data key :param addon_id: addon_id."""
+        if not addon_id:
+            addon_id = self.__class__.__name__
+        return self.addondata.del_data(addon_id, key)
+
+    def post_message(
+        self,
+        channel: MessageChannel = None,
+        mtype: NotificationType = None,
+        title: str | None = None,
+        text: str | None = None,
+        image: str | None = None,
+        link: str | None = None,
+        userid: str | None = None,
+        username: str | None = None,
+        **kwargs,
+    ):
+        """Send a message."""
+        if not link:
+            link = settings.MP_DOMAIN(
+                f"#/addons?tab=installed&id={self.__class__.__name__}"
+            )
+        self.chain.post_message(
+            Notification(
+                channel=channel,
+                mtype=mtype,
+                title=title,
+                text=text,
+                image=image,
+                link=link,
+                userid=userid,
+                username=username,
+                **kwargs,
+            )
+        )
+
+    def async_post_message(
+        self,
+        channel: MessageChannel = None,
+        mtype: NotificationType = None,
+        title: str | None = None,
+        text: str | None = None,
+        image: str | None = None,
+        link: str | None = None,
+        userid: str | None = None,
+        username: str | None = None,
+        **kwargs,
+    ):
+        """Send a message."""
+        if not link:
+            link = settings.MP_DOMAIN(
+                f"#/addons?tab=installed&id={self.__class__.__name__}"
+            )
+        self.chain.async_post_message(
+            Notification(
+                channel=channel,
+                mtype=mtype,
+                title=title,
+                text=text,
+                image=image,
+                link=link,
+                userid=userid,
+                username=username,
+                **kwargs,
+            )
+        )

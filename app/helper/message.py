@@ -1,30 +1,245 @@
 from __future__ import annotations
 
+import ast
 import json
 import queue
 import threading
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
+from jinja2 import Template
+
+from app.core.cache import TTLCache
 from app.core.config import global_vars
 from app.db.systemconfig_oper import SystemConfigOper
 from app.log import logger
 from app.schemas.message import Notification
 from app.schemas.types import SystemConfigKey
 from app.utils.singleton import Singleton, SingletonClass
+from app.utils.string import StringUtils
+
+
+class TemplateContextBuilder:
+    """Template context builder."""
+
+    def __init__(self):
+        self._context = {}
+
+    def build(self, include_raw_objects: bool = True, **kwargs) -> dict[str, Any]:
+        """
+        :param include_raw_objects: Whether to include raw objects.
+        :return: Rendered context dictionary.
+        """
+        self._context.clear()
+        if kwargs:
+            self._context.update(kwargs)
+
+        if include_raw_objects:
+            self._add_raw_objects()
+
+        # 移除空值
+        return {k: v for k, v in self._context.items() if v is not None}
+
+    def _add_raw_objects(self):
+        """Add raw object references."""
+        raw_objects = {}
+        self._context.update(raw_objects)
+
+
+class TemplateHelper(metaclass=SingletonClass):
+    """Template format rendering helper class."""
+
+    def __init__(self):
+        self.builder = TemplateContextBuilder()
+        self.cache = TTLCache(region="notification", maxsize=100, ttl=600)
+
+    @staticmethod
+    def _generate_cache_key(cuntent: str | dict) -> str:
+        """Generate cache key."""
+        if isinstance(cuntent, dict):
+            base_str = cuntent.get("title", "") + cuntent.get("text", "")
+            return StringUtils.md5_hash(
+                json.dumps(base_str, sort_keys=True, ensure_ascii=False)
+            )
+
+        return StringUtils.md5_hash(cuntent)
+
+    def get_cache_context(self, content: str | dict) -> dict | None:
+        """Get cached context."""
+        cache_key = self._generate_cache_key(content)
+        return self.cache.get(cache_key)
+
+    def set_cache_context(self, content: str | dict, context: dict) -> None:
+        """Set cached context."""
+        cache_key = self._generate_cache_key(content)
+        self.cache[cache_key] = context
+
+    def render(
+        self,
+        template_content: str,
+        template_type: Literal["string", "dict", "literal"] = "literal",
+        **kwargs,
+    ) -> str | dict | None:
+        """Render content based on the template.
+
+        :param template_content: Template string.
+        :param template_type: Template string type (message notification `literal`, path `string`).
+        :param kwargs: Additional business objects.
+        :raises ValueError: When an error occurs during template processing.
+        :return: Rendered result.
+        """
+        try:
+            # Parse template string
+            parsed = self.parse_template_content(template_content, template_type)
+            if not parsed:
+                raise ValueError("Template parsing failed")
+
+            context = self.builder.build(**kwargs)
+            if not context:
+                raise ValueError("Context building failed")
+
+            rendered = self.render_with_context(parsed, context)
+            if not rendered:
+                raise ValueError("Template rendering failed")
+
+            if (
+                rendered := rendered
+                if template_type == "string"
+                else self.__process_formatted_string(rendered)
+            ):
+                # 缓存上下文
+                self.set_cache_context(rendered, context)
+                # 返回渲染结果
+                return rendered
+            return None
+        except Exception as e:
+            raise ValueError(f"Template processing failed: {str(e)}") from e
+
+    @staticmethod
+    def render_with_context(template_content: str, context: dict) -> str:
+        """Render a Jinja2 template string with the given context.
+
+        template_content: Jinja2 template string.
+        context: Context data for rendering.
+        """
+        # Render template
+        template = Template(template_content)
+        return template.render(context)
+
+    @staticmethod
+    def parse_template_content(
+        template_content: str | dict,
+        template_type: Literal["string", "dict", "literal"] = None,
+    ) -> str | None:
+        """Parse template string.
+
+        :param template_content: Template format string.
+        :param template_type: Template string type.
+        """
+
+        def parse_literal(_template_content: str) -> str:
+            """Parse Python literal."""
+            try:
+                template_dict = (
+                    ast.literal_eval(_template_content)
+                    if isinstance(_template_content, str)
+                    else _template_content
+                )
+                if not isinstance(template_dict, dict):
+                    raise ValueError("Parsed result must be a dictionary")
+                return json.dumps(template_dict, ensure_ascii=False)
+            except (ValueError, SyntaxError) as err:
+                raise ValueError(f"Invalid Python literal format: {str(err)}") from err
+
+        try:
+            if template_type:
+                parse_map = {
+                    "string": lambda x: str(x),
+                    "dict": lambda x: json.dumps(x, ensure_ascii=False),
+                    "literal": parse_literal,
+                }
+                return parse_map[template_type](template_content)
+
+            # Automatically determine the template type
+            if isinstance(template_content, dict):
+                return json.dumps(template_content, ensure_ascii=False)
+            elif isinstance(template_content, str):
+                try:
+                    json.loads(template_content)
+                    return template_content
+                except json.JSONDecodeError:
+                    try:
+                        return parse_literal(template_content)
+                    except (ValueError, SyntaxError):
+                        return template_content
+            else:
+                raise ValueError(f"Unsupported template type: {type(template_content)}")
+
+        except Exception as e:
+            logger.error(f"Template parsing failed: {str(e)}")
+            return None
+
+    @staticmethod
+    def __process_formatted_string(rendered: str) -> dict | str | None:
+        """Process formatted string.
+
+        Retain escape characters.
+        """
+
+        def restore_chars(obj: Any) -> Any:
+            """Restore special characters."""
+            if isinstance(obj, str):
+                return (
+                    obj.replace("\n", "\n")
+                    .replace("\r", "\r")
+                    .replace("\t", "\t")
+                    .replace("\b", "\b")
+                    .replace("\f", "\f")
+                )
+            elif isinstance(obj, dict):
+                return {k: restore_chars(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [restore_chars(item) for item in obj]
+            return obj
+
+        # Define special character mapping
+        special_chars = {
+            "\n": "\\n",  # Newline
+            "\r": "\\r",  # Carriage return
+            "\t": "\\t",  # Tab
+            "\b": "\\b",  # Backspace
+            "\f": "\\f",  # Form feed
+        }
+
+        # Process special characters
+        processed = rendered
+        for char, escape in special_chars.items():
+            processed = processed.replace(char, escape)
+
+        # Attempt to parse as JSON
+        try:
+            rendered_dict = json.loads(processed)
+            return restore_chars(rendered_dict)
+        except json.JSONDecodeError:
+            return rendered
+
+    def close(self):
+        """Clean up resources."""
+        if self.cache:
+            self.cache.close()
 
 
 class MessageTemplateHelper:
-    """消息模板渲染器."""
+    """Message template renderer."""
 
     @staticmethod
     def render(message: Notification, *args, **kwargs) -> Notification | None:
-        """渲染消息模板."""
+        """Render message template."""
         if not MessageTemplateHelper.is_instance_valid(message):
             if MessageTemplateHelper.meets_update_conditions(message, *args, **kwargs):
-                logger.info("将使用模板渲染消息内容")
+                logger.info("Rendering message content using template")
                 return MessageTemplateHelper._apply_template_data(
                     message, *args, **kwargs
                 )
@@ -32,19 +247,19 @@ class MessageTemplateHelper:
 
     @staticmethod
     def is_instance_valid(message: Notification) -> bool:
-        """检查消息是否有效."""
+        """Check if the message is valid."""
         if isinstance(message, Notification):
             return bool(message.title or message.text)
         return False
 
     @staticmethod
     def meets_update_conditions(message: Notification, *args, **kwargs) -> bool:
-        """判断是否满足消息实例更新条件.
+        """Check if the message instance update conditions are met.
 
-        满足条件需同时具备：
-        1. 消息为有效Notification实例
-        2. 消息指定了模板类型(ctype)
-        3. 存在待渲染的模板变量数据
+        Conditions to be met simultaneously:
+        1. The message is a valid Notification instance
+        2. The message specifies a template type (ctype)
+        3. There is template variable data to be rendered
         """
         if isinstance(message, Notification):
             return True if message.ctype and (args or kwargs) else False
@@ -52,23 +267,41 @@ class MessageTemplateHelper:
 
     @staticmethod
     def _get_template(message: Notification) -> str | None:
-        """获取消息模板."""
+        """Get the message template."""
         template_dict: dict[str, str] = SystemConfigOper().get(
             SystemConfigKey.NotificationTemplates
         )
         return template_dict.get(f"{message.ctype.value}")
 
+    @staticmethod
+    def _apply_template_data(
+        message: Notification, *args, **kwargs
+    ) -> Notification | None:
+        """Update message instance."""
+        try:
+            if template := MessageTemplateHelper._get_template(message):
+                rendered = TemplateHelper().render(
+                    *args, template_content=template, **kwargs
+                )
+                for key, value in rendered.items():
+                    if hasattr(message, key):
+                        setattr(message, key, value)
+            return message
+        except Exception as e:
+            logger.error(f"Error updating Notification: {str(e)}")
+            return message
+
 
 class MessageQueueManager(metaclass=SingletonClass):
-    """消息发送队列管理器."""
+    """Message sending queue manager."""
 
     def __init__(
         self, send_callback: Callable | None = None, check_interval: int = 10
     ) -> None:
-        """消息队列管理器初始化.
+        """Initialize the message queue manager.
 
-        :param send_callback: 实际发送消息的回调函数
-        :param check_interval: 时间检查间隔（秒）
+        :param send_callback: Callback function for actually sending messages
+        :param check_interval: Time check interval (seconds)
         """
         self.schedule_periods: list[tuple[int, int, int, int]] = []
 
@@ -83,14 +316,17 @@ class MessageQueueManager(metaclass=SingletonClass):
         self.thread.start()
 
     def init_config(self):
-        """初始化配置."""
+        """Initialize configuration."""
         self.schedule_periods = self._parse_schedule(
             SystemConfigOper().get(SystemConfigKey.NotificationSendTime)
         )
 
     @staticmethod
     def _parse_schedule(periods: list | dict) -> list[tuple[int, int, int, int]]:
-        """将字符串时间格式转换为分钟数元组 支持格式为 'HH:MM' 或 'HH:MM:SS' 的时间字符串."""
+        """Convert string time format to a tuple of minutes.
+
+        Supports 'HH:MM' or 'HH:MM:SS' format.
+        """
         parsed = []
         if not periods:
             return parsed
@@ -102,46 +338,48 @@ class MessageQueueManager(metaclass=SingletonClass):
             if not period.get("start") or not period.get("end"):
                 continue
             try:
-                # 处理 start 时间
+                # Process start time
                 start_parts = period["start"].split(":")
                 if len(start_parts) == 2:
                     start_h, start_m = map(int, start_parts)
                 elif len(start_parts) >= 3:
                     start_h, start_m = map(
                         int, start_parts[:2]
-                    )  # 只取前两个部分 (HH:MM)
+                    )  # Only take the first two parts (HH:MM)
                 else:
                     continue
-                # 处理 end 时间
+                # Process end time
                 end_parts = period["end"].split(":")
                 if len(end_parts) == 2:
                     end_h, end_m = map(int, end_parts)
                 elif len(end_parts) >= 3:
-                    end_h, end_m = map(int, end_parts[:2])  # 只取前两个部分 (HH:MM)
+                    end_h, end_m = map(
+                        int, end_parts[:2]
+                    )  # Only take the first two parts (HH:MM)
                 else:
                     continue
 
                 parsed.append((start_h, start_m, end_h, end_m))
             except ValueError as e:
                 logger.error(
-                    f"解析时间周期时出现错误：{period}. 错误：{str(e)}. 跳过此周期。"
+                    f"Error parsing time period: {period}. Error: {str(e)}. Skipping this period."
                 )
                 continue
             except Exception as e:
                 logger.error(
-                    f"解析时间周期时出现意外错误：{period}. 错误：{str(e)}. 跳过此周期。"
+                    f"Unexpected error parsing time period: {period}. Error: {str(e)}. Skipping this period."
                 )
                 continue
         return parsed
 
     @staticmethod
     def _time_to_minutes(time_str: str) -> int:
-        """将 'HH:MM' 格式转换为分钟数."""
+        """Convert 'HH:MM' format to minutes."""
         hours, minutes = map(int, time_str.split(":"))
         return hours * 60 + minutes
 
     def _is_in_scheduled_time(self, current_time: datetime) -> bool:
-        """检查当前时间是否在允许发送的时间段内."""
+        """Check if the current time is within the allowed sending period."""
         if not self.schedule_periods:
             return True
         current_minutes = current_time.hour * 60 + current_time.minute
@@ -159,31 +397,33 @@ class MessageQueueManager(metaclass=SingletonClass):
         return False
 
     def send_message(self, *args, **kwargs) -> None:
-        """发送消息（立即发送或加入队列）"""
+        """Send a message (immediately or add to queue)."""
         immediately = kwargs.pop("immediately", False)
         if immediately or self._is_in_scheduled_time(datetime.now()):
             self._send(*args, **kwargs)
         else:
             self.queue.put({"args": args, "kwargs": kwargs})
-            logger.info(f"消息已加入队列，当前队列长度：{self.queue.qsize()}")
+            logger.info(
+                f"Message added to queue, current queue size: {self.queue.qsize()}"
+            )
 
     async def async_send_message(self, *args, **kwargs) -> None:
-        """异步发送消息（直接加入队列）"""
+        """Asynchronously send a message (add to queue directly)."""
         kwargs.pop("immediately", False)
         self.queue.put({"args": args, "kwargs": kwargs})
-        logger.info(f"消息已加入队列，当前队列长度：{self.queue.qsize()}")
+        logger.info(f"Message added to queue, current queue size: {self.queue.qsize()}")
 
     def _send(self, *args, **kwargs) -> None:
-        """实际发送消息（可通过回调函数自定义）"""
+        """Actually send the message (can be customized via callback)."""
         if self.send_callback:
             try:
-                logger.info(f"发送消息：{kwargs}")
+                logger.info(f"Sending message: {kwargs}")
                 self.send_callback(*args, **kwargs)
             except Exception as e:
-                logger.error(f"发送消息错误：{str(e)}")
+                logger.error(f"Error sending message: {str(e)}")
 
     def _monitor_loop(self) -> None:
-        """后台线程循环检查时间并处理队列."""
+        """Background thread to loop, check time, and process the queue."""
         while self._running:
             current_time = datetime.now()
             if self._is_in_scheduled_time(current_time):
@@ -195,21 +435,23 @@ class MessageQueueManager(metaclass=SingletonClass):
                     try:
                         message = self.queue.get_nowait()
                         self._send(*message["args"], **message["kwargs"])
-                        logger.info(f"队列剩余消息：{self.queue.qsize()}")
+                        logger.info(
+                            f"Messages remaining in queue: {self.queue.qsize()}"
+                        )
                     except queue.Empty:
                         break
             time.sleep(self.check_interval)
 
     def stop(self) -> None:
-        """停止队列管理器."""
+        """Stop the queue manager."""
         self._running = False
-        logger.info("正在停止消息队列...")
+        logger.info("Stopping message queue...")
         self.thread.join()
-        logger.info("消息队列已停止")
+        logger.info("Message queue stopped.")
 
 
 class MessageHelper(metaclass=Singleton):
-    """消息队列管理器，包括系统消息和用户消息."""
+    """Message queue manager, including system and user messages."""
 
     def __init__(self):
         self.sys_queue = queue.Queue()
@@ -222,13 +464,20 @@ class MessageHelper(metaclass=Singleton):
         title: str = None,
         note: list | dict = None,
     ):
-        """存消息 :param message: 消息 :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息
-        :param title: 标题 :param note: 附件json."""
+        """Put a message. :param message: The message content.
+
+        :param role: The message channel.
+               - system: System message.
+               - plugin: Plugin message.
+               - user: User message.
+        :param title: The title of the message.
+        :param note: Attached JSON data.
+        """
         if role in ["system", "plugin"]:
-            # 没有标题时获取插件名称
+            # Get plugin name if title is not provided
             if role == "plugin" and not title:
-                title = "插件通知"
-            # 系统通知，默认
+                title = "Plugin Notification"
+            # System notification, default
             self.sys_queue.put(
                 json.dumps(
                     {
@@ -242,7 +491,7 @@ class MessageHelper(metaclass=Singleton):
             )
         else:
             if isinstance(message, str):
-                # 非系统的文本通知
+                # Non-system text notification
                 self.user_queue.put(
                     json.dumps(
                         {
@@ -256,7 +505,7 @@ class MessageHelper(metaclass=Singleton):
                     )
                 )
             elif hasattr(message, "to_dict"):
-                # 非系统的复杂结构通知，如媒体信息/种子列表等。
+                # Non-system complex structure notification, such as media info/torrent list, etc.
                 content = message.to_dict()
                 content["title"] = title
                 content["date"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -264,7 +513,13 @@ class MessageHelper(metaclass=Singleton):
                 self.user_queue.put(json.dumps(content))
 
     def get(self, role: str = "system") -> str | None:
-        """取消息 :param role: 消息通道 systm：系统消息，plugin：插件消息，user：用户消息."""
+        """Get a message.
+
+        :param role: The message channel.
+               - system: System message.
+               - plugin: Plugin message.
+               - user: User message.
+        """
         if role == "system":
             if not self.sys_queue.empty():
                 return self.sys_queue.get(block=False)
@@ -275,6 +530,6 @@ class MessageHelper(metaclass=Singleton):
 
 
 def stop_message():
-    """停止消息服务."""
-    # 停止消息队列
+    """Stop the message service."""
+    # Stop the message queue
     MessageQueueManager().stop()

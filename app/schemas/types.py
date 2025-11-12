@@ -72,18 +72,16 @@ class EventType(Enum):
 # 消息类型
 class NotificationType(Enum):
     # 插件消息
-    Plugin = "插件"
+    Addon = "Addon"
     # 其它消息
-    Other = "其它"
+    Other = "Other"
 
 
 # 消息渠道
 class MessageChannel(Enum):
-    """
-    消息渠道
-    """
+    """消息渠道."""
 
-    Wechat = "微信"
+    Wechat = "Wechat"
     Telegram = "Telegram"
     Slack = "Slack"
     SynologyChat = "SynologyChat"

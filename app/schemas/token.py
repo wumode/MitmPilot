@@ -22,7 +22,7 @@ class Token(BaseModel):
 
 class TokenPayload(BaseModel):
     # 用户ID
-    sub: int | None = None
+    sub: int
     # 用户名
     username: str = None
     # 超级用户

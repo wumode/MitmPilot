@@ -7,9 +7,7 @@ from app.schemas.types import MessageChannel, NotificationType
 
 
 class ComingMessage(BaseModel):
-    """
-    Incoming message
-    """
+    """Incoming message."""
 
     # User ID
     userid: str | int | None = None
@@ -37,9 +35,7 @@ class ComingMessage(BaseModel):
     callback_query: dict | None = None
 
     def to_dict(self):
-        """
-        Convert to dictionary
-        """
+        """Convert to dictionary."""
         items = self.model_dump()
         for k, v in items.items():
             if isinstance(v, MessageChannel):
@@ -48,7 +44,7 @@ class ComingMessage(BaseModel):
 
 
 class Notification(BaseModel):
-    """ """
+    """"""
 
     # Message channel
     channel: MessageChannel | None = None
@@ -74,6 +70,7 @@ class Notification(BaseModel):
     action: int | None = 1
     # Dictionary of target user IDs for the message, used when no user ID is specified
     targets: dict | None = None
+    # TODO: using pydantic model for button
     # Button list, format: [[{"text": "Button text", "callback_data": "Callback data", "url": "Link"}]]
     buttons: list[list[dict]] | None = None
     # Original message ID, for editing messages
@@ -82,9 +79,7 @@ class Notification(BaseModel):
     original_chat_id: str | None = None
 
     def to_dict(self):
-        """
-        Convert to dictionary
-        """
+        """Convert to dictionary."""
         items = self.model_dump()
         for k, v in items.items():
             if isinstance(v, MessageChannel) or isinstance(v, NotificationType):
@@ -93,9 +88,7 @@ class Notification(BaseModel):
 
 
 class NotificationSwitch(BaseModel):
-    """
-    Message switch
-    """
+    """Message switch."""
 
     # Message type
     mtype: str | None = None
@@ -114,18 +107,14 @@ class NotificationSwitch(BaseModel):
 
 
 class Subscription(BaseModel):
-    """
-    Client message subscription
-    """
+    """Client message subscription."""
 
     endpoint: str | None = None
     keys: dict | None = Field(default_factory=dict)
 
 
 class SubscriptionMessage(BaseModel):
-    """
-    Client subscription message body
-    """
+    """Client subscription message body."""
 
     title: str | None = None
     body: str | None = None
@@ -135,9 +124,7 @@ class SubscriptionMessage(BaseModel):
 
 
 class ChannelCapability(Enum):
-    """
-    Channel capability enumeration
-    """
+    """Channel capability enumeration."""
 
     # Support inline buttons
     INLINE_BUTTONS = "inline_buttons"
@@ -161,9 +148,7 @@ class ChannelCapability(Enum):
 
 @dataclass
 class ChannelCapabilities:
-    """
-    Channel capability configuration
-    """
+    """Channel capability configuration."""
 
     channel: MessageChannel
     capabilities: set[ChannelCapability]
@@ -174,9 +159,7 @@ class ChannelCapabilities:
 
 
 class ChannelCapabilityManager:
-    """
-    Channel capability manager
-    """
+    """Channel capability manager."""
 
     _capabilities: dict[MessageChannel, ChannelCapabilities] = {
         MessageChannel.Telegram: ChannelCapabilities(
@@ -258,18 +241,14 @@ class ChannelCapabilityManager:
 
     @classmethod
     def get_capabilities(cls, channel: MessageChannel) -> ChannelCapabilities | None:
-        """
-        Get channel capabilities
-        """
+        """Get channel capabilities."""
         return cls._capabilities.get(channel)
 
     @classmethod
     def supports_capability(
         cls, channel: MessageChannel, capability: ChannelCapability
     ) -> bool:
-        """
-        Check if the channel supports a certain capability
-        """
+        """Check if the channel supports a certain capability."""
         channel_caps = cls.get_capabilities(channel)
         if not channel_caps:
             return False
@@ -277,60 +256,44 @@ class ChannelCapabilityManager:
 
     @classmethod
     def supports_buttons(cls, channel: MessageChannel) -> bool:
-        """
-        Check if the channel supports buttons
-        """
+        """Check if the channel supports buttons."""
         return cls.supports_capability(channel, ChannelCapability.INLINE_BUTTONS)
 
     @classmethod
     def supports_callbacks(cls, channel: MessageChannel) -> bool:
-        """
-        Check if the channel supports callbacks
-        """
+        """Check if the channel supports callbacks."""
         return cls.supports_capability(channel, ChannelCapability.CALLBACK_QUERIES)
 
     @classmethod
     def supports_editing(cls, channel: MessageChannel) -> bool:
-        """
-        Check if the channel supports message editing
-        """
+        """Check if the channel supports message editing."""
         return cls.supports_capability(channel, ChannelCapability.MESSAGE_EDITING)
 
     @classmethod
     def supports_deletion(cls, channel: MessageChannel) -> bool:
-        """
-        Check if the channel supports message deletion
-        """
+        """Check if the channel supports message deletion."""
         return cls.supports_capability(channel, ChannelCapability.MESSAGE_DELETION)
 
     @classmethod
     def get_max_buttons_per_row(cls, channel: MessageChannel) -> int:
-        """
-        Get the maximum number of buttons per row
-        """
+        """Get the maximum number of buttons per row."""
         channel_caps = cls.get_capabilities(channel)
         return channel_caps.max_buttons_per_row if channel_caps else 2
 
     @classmethod
     def get_max_button_rows(cls, channel: MessageChannel) -> int:
-        """
-        Get the maximum number of button rows
-        """
+        """Get the maximum number of button rows."""
         channel_caps = cls.get_capabilities(channel)
         return channel_caps.max_button_rows if channel_caps else 5
 
     @classmethod
     def get_max_button_text_length(cls, channel: MessageChannel) -> int:
-        """
-        Get the maximum length of button text
-        """
+        """Get the maximum length of button text."""
         channel_caps = cls.get_capabilities(channel)
         return channel_caps.max_button_text_length if channel_caps else 20
 
     @classmethod
     def should_use_fallback(cls, channel: MessageChannel) -> bool:
-        """
-        Whether to use a fallback strategy
-        """
+        """Whether to use a fallback strategy."""
         channel_caps = cls.get_capabilities(channel)
         return channel_caps.fallback_enabled if channel_caps else True

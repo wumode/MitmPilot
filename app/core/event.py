@@ -45,7 +45,7 @@ class Event:
         priority: int = DEFAULT_EVENT_PRIORITY,
     ):
         """
-        :param event_type: The type of the event, supports EventType or ChainEventType
+        :param event_type: The type of the event
         :param event_data: Optional, data carried by the event, defaults to an empty
                            dictionary
         :param priority: Optional, the priority of the event, defaults to 10
@@ -77,7 +77,7 @@ class Event:
         """Determines whether an event is a broadcast event or a chain event based on
         its type.
 
-        :param event_type: The event type, supports EventType or ChainEventType
+        :param event_type: The event type
         :return: Returns "Broadcast Event" or "Chain Event"
         """
         return "Broadcast Event" if isinstance(event_type, EventType) else "Chain Event"
