@@ -35,9 +35,7 @@ from app.core.config import settings
 
 
 def get_id_column():
-    """
-    Returns the appropriate ID column definition based on the database type.
-    """
+    """Returns the appropriate ID column definition based on the database type."""
     if settings.DB_TYPE.lower() == "postgresql":
         # PostgreSQL uses SERIAL type to let the database handle sequences automatically.
         return Column(
@@ -57,9 +55,11 @@ def _get_database_engine(is_async: Literal[True]) -> AsyncEngine: ...
 
 
 def _get_database_engine(is_async: bool = False) -> Engine | AsyncEngine:
-    """
-    Get database connection parameters and set WAL mode.
-    :param is_async: Whether to create an asynchronous engine, True - asynchronous engine, False - synchronous engine
+    """Get database connection parameters and set WAL mode.
+
+    :param is_async: Whether to create an asynchronous engine
+        - True: asynchronous engine
+        - False: synchronous engine
     :return: Returns the corresponding database engine
     """
     # Select connection method based on database type
@@ -70,9 +70,7 @@ def _get_database_engine(is_async: bool = False) -> Engine | AsyncEngine:
 
 
 def _get_sqlite_engine(is_async: bool = False):
-    """
-    Get SQLite database engine.
-    """
+    """Get SQLite database engine."""
     # Connection parameters
     _connect_args = {
         "timeout": settings.DB_TIMEOUT,
@@ -135,9 +133,7 @@ def _get_sqlite_engine(is_async: bool = False):
         _journal_mode = "WAL" if settings.DB_WAL_ENABLE else "DELETE"
 
         async def set_async_wal_mode():
-            """
-            Set WAL mode for asynchronous engine.
-            """
+            """Set WAL mode for asynchronous engine."""
             async with async_engine.connect() as _connection:
                 result = await _connection.execute(
                     text(f"PRAGMA journal_mode={_journal_mode};")
@@ -154,9 +150,7 @@ def _get_sqlite_engine(is_async: bool = False):
 
 
 def _get_postgresql_engine(is_async: bool = False):
-    """
-    Get PostgreSQL database engine.
-    """
+    """Get PostgreSQL database engine."""
     # Build PostgreSQL connection URL
     if settings.DB_POSTGRESQL_PASSWORD:
         db_url = f"postgresql://{settings.DB_POSTGRESQL_USERNAME}:{settings.DB_POSTGRESQL_PASSWORD}@{settings.DB_POSTGRESQL_HOST}:{settings.DB_POSTGRESQL_PORT}/{settings.DB_POSTGRESQL_DATABASE}"
@@ -237,8 +231,8 @@ ScopedSession = scoped_session(SessionFactory)
 
 
 def get_db() -> Generator:
-    """
-    Get a database session for web requests.
+    """Get a database session for web requests.
+
     :return: Session
     """
     db = None
@@ -251,8 +245,8 @@ def get_db() -> Generator:
 
 
 async def get_async_db() -> AsyncGenerator[AsyncSession]:
-    """
-    Get an asynchronous database session for web requests.
+    """Get an asynchronous database session for web requests.
+
     :return: AsyncSession
     """
     async with AsyncSessionFactory() as session:
@@ -263,9 +257,7 @@ async def get_async_db() -> AsyncGenerator[AsyncSession]:
 
 
 async def close_database():
-    """
-    Close all database connections and clean up resources.
-    """
+    """Close all database connections and clean up resources."""
     try:
         # Dispose of the synchronous connection pool
         DBEngine.dispose()
@@ -276,9 +268,7 @@ async def close_database():
 
 
 def _get_args_db(args: tuple, kwargs: dict) -> Session | None:
-    """
-    Get the database Session object from the arguments.
-    """
+    """Get the database Session object from the arguments."""
     db = None
     if args:
         for arg in args:
@@ -294,9 +284,7 @@ def _get_args_db(args: tuple, kwargs: dict) -> Session | None:
 
 
 def _get_args_async_db(args: tuple, kwargs: dict) -> AsyncSession | None:
-    """
-    Get the asynchronous database AsyncSession object from the arguments.
-    """
+    """Get the asynchronous database AsyncSession object from the arguments."""
     db = None
     if args:
         for arg in args:
@@ -312,9 +300,10 @@ def _get_args_async_db(args: tuple, kwargs: dict) -> AsyncSession | None:
 
 
 def _update_args_db(args: tuple, kwargs: dict, db: Session) -> tuple[tuple, dict]:
-    """
-    Update the database Session object in the arguments.
-    When passing by keyword, update the value of db, otherwise update the 1st or 2nd argument.
+    """Update the database Session object in the arguments.
+
+    When passing by keyword, update the value of db, otherwise update the 1st or 2nd
+    argument.
     """
     if kwargs and "db" in kwargs:
         kwargs["db"] = db
@@ -329,9 +318,10 @@ def _update_args_db(args: tuple, kwargs: dict, db: Session) -> tuple[tuple, dict
 def _update_args_async_db(
     args: tuple, kwargs: dict, db: AsyncSession
 ) -> tuple[tuple, dict]:
-    """
-    Update the asynchronous database AsyncSession object in the arguments.
-    When passing by keyword, update the value of db, otherwise update the 1st or 2nd argument.
+    """Update the asynchronous database AsyncSession object in the arguments.
+
+    When passing by keyword, update the value of db, otherwise update the 1st or 2nd
+    argument.
     """
     if kwargs and "db" in kwargs:
         kwargs["db"] = db
@@ -344,8 +334,8 @@ def _update_args_async_db(
 
 
 def db_update(func):
-    """
-    Decorator for database update operations.
+    """Decorator for database update operations.
+
     The first parameter must be a database session or a db parameter must exist.
     """
 
@@ -380,9 +370,10 @@ def db_update(func):
 
 
 def async_db_update(func):
-    """
-    Asynchronous decorator for database update operations.
-    The first parameter must be an asynchronous database session or a db parameter must exist.
+    """Asynchronous decorator for database update operations.
+
+    The first parameter must be an asynchronous database session or a db parameter must
+    exist.
     """
 
     async def wrapper(*args, **kwargs):
@@ -416,8 +407,8 @@ def async_db_update(func):
 
 
 def db_query(func):
-    """
-    Decorator for database query operations.
+    """Decorator for database query operations.
+
     The first parameter must be a database session or a db parameter must exist.
     Note: When querying list data with db.query, you need to convert it to a list before returning.
     """
@@ -449,8 +440,8 @@ def db_query(func):
 
 
 def async_db_query(func):
-    """
-    Asynchronous decorator for database query operations.
+    """Asynchronous decorator for database query operations.
+
     The first parameter must be an asynchronous database session or a db parameter must exist.
     Note: When querying list data with db.query, you need to convert it to a list before returning.
     """
@@ -566,9 +557,7 @@ class Base:
 
 
 class DbOper:
-    """
-    Base class for database operations.
-    """
+    """Base class for database operations."""
 
     def __init__(self, db: Session | AsyncSession = None):
         self._db = db

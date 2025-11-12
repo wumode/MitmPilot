@@ -11,8 +11,8 @@ class TimerUtils:
         min_interval: int = 20,
         max_interval: int = 40,
     ) -> list[datetime.datetime]:
-        """
-        按执行次数生成随机定时器
+        """按执行次数生成随机定时器.
+
         :param num_executions: 执行次数
         :param begin_hour: 开始时间
         :param end_hour: 结束时间
@@ -47,11 +47,10 @@ class TimerUtils:
     def random_even_scheduler(
         num_executions: int = 1, begin_hour: int = 7, end_hour: int = 23
     ) -> list[datetime.datetime]:
-        """
-        按执行次数尽可能平均生成随机定时器
-        :param num_executions: 执行次数
-        :param begin_hour: 计划范围开始的小时数
-        :param end_hour: 计划范围结束的小时数
+        """按执行次数尽可能平均生成随机定时器 :param num_executions: 执行次数 :param begin_hour:
+
+        计划范围开始的小时数
+        :param end_hour: 计划范围结束的小时数.
         """
         trigger_times = []
         start_time = datetime.datetime.now().replace(
@@ -78,9 +77,7 @@ class TimerUtils:
 
     @staticmethod
     def time_difference(input_datetime: datetime.datetime) -> str:
-        """
-        判断输入时间与当前的时间差，如果输入时间大于当前时间则返回时间差，否则返回空字符串
-        """
+        """判断输入时间与当前的时间差，如果输入时间大于当前时间则返回时间差，否则返回空字符串."""
         if not input_datetime:
             return ""
         current_datetime = datetime.datetime.now(datetime.UTC).astimezone()
@@ -107,9 +104,7 @@ class TimerUtils:
 
     @staticmethod
     def diff_minutes(input_datetime: datetime.datetime) -> int:
-        """
-        计算当前时间与输入时间的分钟差
-        """
+        """计算当前时间与输入时间的分钟差."""
         if not input_datetime:
             return 0
         time_difference = datetime.datetime.now() - input_datetime

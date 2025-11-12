@@ -104,6 +104,7 @@ class _AddonBase(metaclass=ABCMeta):
         Assemble the addon details page, need to return the page configuration with data
         The addon details page is assembled using Vuetify components,
         refer to: https://vuetifyjs.com/
+
         :return: Page configuration (vuetify mode) or None (vue mode)
         """
         raise NotImplementedError
@@ -141,12 +142,18 @@ class _AddonBase(metaclass=ABCMeta):
         raise NotImplementedError
 
     def get_name(self) -> str:
-        """Get addon name :return: The addon name."""
+        """Get addon name.
+
+        :return: The addon name.
+        """
         return self.addon_name
 
     def update_config(self, config: dict, addon_id: str | None = None) -> bool | None:
-        """Update configuration information :param config: The configuration information
-        dictionary :param addon_id: Addon ID."""
+        """Update configuration information.
+
+        :param config: The configuration information dictionary
+        :param addon_id: Addon ID.
+        """
         if not addon_id:
             addon_id = self.__class__.__name__
         return self.systemconfig.set(
@@ -154,7 +161,10 @@ class _AddonBase(metaclass=ABCMeta):
         )
 
     def get_config(self, addon_id: str | None = None) -> Any:
-        """Get configuration information :param addon_id: Addon ID."""
+        """Get configuration information.
+
+        :param addon_id: Addon ID.
+        """
         if not addon_id:
             addon_id = self.__class__.__name__
         return self.systemconfig.get(
@@ -171,20 +181,32 @@ class _AddonBase(metaclass=ABCMeta):
         return data_path
 
     def save_data(self, key: str, value: Any, addon_id: str | None = None):
-        """Save addon data :param key: Data key :param value: Data value :param
-        addon_id: Addon ID."""
+        """Save addon data.
+
+        :param key: Data key
+        :param value: Data value
+        :param addon_id: Addon ID.
+        """
         if not addon_id:
             addon_id = self.__class__.__name__
         self.addondata.save(addon_id, key, value)
 
     def get_data(self, key: str | None = None, addon_id: str | None = None) -> Any:
-        """Get addon data :param key: Data key :param addon_id: addon_id."""
+        """Get addon data.
+
+        :param key: Data key
+        :param addon_id: addon_id.
+        """
         if not addon_id:
             addon_id = self.__class__.__name__
         return self.addondata.get_data(addon_id, key)
 
     def del_data(self, key: str, addon_id: str | None = None) -> Any:
-        """Delete addon date :param key: Data key :param addon_id: addon_id."""
+        """Delete addon date.
+
+        :param key: Data key
+        :param addon_id: addon_id.
+        """
         if not addon_id:
             addon_id = self.__class__.__name__
         return self.addondata.del_data(addon_id, key)

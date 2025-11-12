@@ -27,10 +27,20 @@ class MessageOper(DbOper):
         note: list | dict = None,
         **kwargs,
     ):
-        """新增消息 :param channel: 消息渠道 :param source: 来源 :param mtype: 消息类型 :param title:
+        """新增消息.
 
-        标题 :param text: 文本内容 :param image: 图片 :param link: 链接 :param userid: 用户ID :param
-        action: 消息方向：0-接收息，1-发送消息 :param note: 附件json.
+        :param channel: 消息渠道
+        :param source: 来源
+        :param mtype: 消息类型
+        :param title: 标题
+        :param text: 文本内容
+        :param image: 图片
+        :param link: 链接
+        :param userid: 用户ID
+        :param action: 消息方向
+            - 0: 接收息
+            - 1: 发送消息
+        :param note: 附件json.
         """
         kwargs.update(
             {

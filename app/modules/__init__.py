@@ -8,88 +8,89 @@ from app.schemas.types import MessageChannel, ModuleType, OtherModulesType
 
 
 class _ModuleBase(metaclass=ABCMeta):
-    """
-    模块基类，实现对应方法，在有需要时会被自动调用，返回None代表不启用该模块，将继续执行下一模块
-    输入参数与输出参数一致的，或没有输出的，可以被多个模块重复实现
+    """Base class for modules.
+
+    Implement the corresponding methods, which will be called automatically when needed.
+    Returning None means that the module is not enabled, and the next module will be
+    executed. Modules with the same input and output parameters, or with no output, can
+    be implemented by multiple modules repeatedly.
     """
 
     @abstractmethod
     def init_module(self) -> None:
-        """
-        模块初始化
-        """
+        """Initializes the module."""
         pass
 
     @abstractmethod
     def init_setting(self) -> tuple[str, str | bool]:
-        """
-        模块开关设置，返回开关名和开关值，开关值为True时代表有值即打开，不实现该方法或返回None代表不使用开关
-        部分模块支持同时开启多个，此时设置项以,分隔，开关值使用in判断
+        """Module switch setting.
+
+        Returns the switch name and switch value. If the switch value is True, it means
+        that the module is enabled if it has a value. Not implementing this method or
+        returning None means that the switch is not used. Some modules support enabling
+        multiple instances at the same time. In this case, the settings are separated by
+        commas, and the switch value is checked using 'in'.
         """
         pass
 
     @staticmethod
     @abstractmethod
     def get_name() -> str:
-        """
-        获取模块名称
-        """
+        """Gets the module name."""
         pass
 
     @staticmethod
     @abstractmethod
     def get_type() -> ModuleType:
-        """
-        获取模块类型
-        """
+        """Gets the module type."""
         pass
 
     @staticmethod
     @abstractmethod
     def get_subtype() -> MessageChannel | OtherModulesType:
-        """
-        获取模块子类型
-        """
+        """Gets the module subtype."""
         pass
 
     @staticmethod
     @abstractmethod
     def get_priority() -> int:
-        """
-        获取模块优先级，数字越小优先级越高，只有同一接口下优先级才生效
+        """Gets the module priority.
+
+        The smaller the number, the higher the priority. The priority is only effective
+        under the same interface.
         """
         pass
 
     @abstractmethod
     def stop(self) -> None:
-        """
-        如果关闭时模块有服务需要停止，需要实现此方法
-        :return: None，该方法可被多个模块同时处理
+        """If the module has a service that needs to be stopped when it is closed, this
+        method needs to be implemented.
+
+        :return: None. This method can be processed by multiple modules at the same
+            time.
         """
         pass
 
     @abstractmethod
     def test(self) -> tuple[bool, str] | None:
-        """
-        模块测试, 返回测试结果和错误信息
+        """Tests the module.
+
+        Returns the test result and error message.
         """
         pass
 
 
-# 定义泛型，用于表示具体的服务类型和配置类型
+# Define generics to represent specific service and configuration types
 TService = TypeVar("TService", bound=object)
 TConf = TypeVar("TConf")
 
 
 class ServiceBase[TService, TConf](metaclass=ABCMeta):
-    """
-    抽象服务基类，负责服务的初始化、获取实例和配置管理
-    """
+    """Abstract base class for services, responsible for service initialization,
+    instance retrieval, and configuration management."""
 
     def __init__(self):
-        """
-        初始化 ServiceBase 类的实例
-        """
+        """Initializes an instance of the ServiceBase class."""
         self._configs: dict[str, TConf] | None = None
         self._instances: dict[str, TService] | None = None
         self._service_name: str | None = None
@@ -99,11 +100,14 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
         service_name: str,
         service_type: type[TService] | Callable[..., TService] | None = None,
     ):
-        """
-        初始化服务，获取配置并实例化对应服务
+        """Initializes the service, gets the configuration, and instantiates the
+        corresponding service.
 
-        :param service_name: 服务名称，作为配置匹配的依据
-        :param service_type: 服务的类型，可以是类类型（Type[TService]）、工厂函数（Callable）或 None 来跳过实例化
+        :param service_name: The name of the service, used as the basis for
+            configuration matching.
+        :param service_type: The type of the service, which can be a class type
+            (Type[TService]), a factory function (Callable), or None to skip
+            instantiation.
         """
         if not service_name:
             raise Exception("service_name is null")
@@ -116,29 +120,28 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
         if not service_type:
             return
         for conf in self._configs.values():
-            # 通过服务类型或工厂函数来创建实例
+            # Create an instance through the service type or factory function
             if isinstance(service_type, type):
-                # 如果传入的是类类型，调用构造函数实例化
+                # If a class type is passed in, call the constructor to instantiate
                 self._instances[conf.name] = service_type(name=conf.name, **conf.config)
             else:
-                # 如果传入的是工厂函数，直接调用工厂函数
+                # If a factory function is passed in, call the factory function directly
                 self._instances[conf.name] = service_type(conf)
 
     def get_instances(self) -> dict[str, TService]:
-        """
-        获取服务实例列表
+        """Gets the list of service instances.
 
-        :return: 返回服务实例列表
+        :return: Returns the list of service instances.
         """
         instances = self._instances if self._instances else {}
         return instances
 
     def get_instance(self, name: str | None = None) -> TService | None:
-        """
-        获取指定名称的服务实例
+        """Gets the service instance with the specified name.
 
-        :param name: 实例名称，可选。如果为 None，则返回默认实例
-        :return: 返回符合条件的服务实例，若不存在则返回 None
+        :param name: The name of the instance, optional. If None, the default instance
+            is returned.
+        :return: Returns the matching service instance, or None if it does not exist.
         """
         if not self._instances:
             return None
@@ -149,19 +152,18 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
 
     @abstractmethod
     def get_configs(self) -> dict[str, TConf]:
-        """
-        获取已启用的服务配置字典
+        """Gets the dictionary of enabled service configurations.
 
-        :return: 返回配置字典
+        :return: Returns the configuration dictionary.
         """
         pass
 
     def get_config(self, name: str | None = None) -> TConf | None:
-        """
-        获取指定名称的服务配置
+        """Gets the service configuration with the specified name.
 
-        :param name: 配置名称，可选。如果为 None，则返回默认服务配置
-        :return: 返回符合条件的配置，若不存在则返回 None
+        :param name: The name of the configuration, optional. If None, the default
+            service configuration is returned.
+        :return: Returns the matching configuration, or None if it does not exist.
         """
         if not self._configs:
             return None
@@ -171,33 +173,27 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
         return self._configs.get(name) if name else None
 
     def get_default_config_name(self) -> str | None:
-        """
-        获取默认服务配置的名称
+        """Gets the name of the default service configuration.
 
-        :return: 默认第一个配置的名称
+        :return: The name of the first configuration by default.
         """
-        # 默认使用第一个配置的名称
+        # Use the name of the first configuration by default
         first_conf = next(iter(self._configs.values()), None)
         return first_conf.name if first_conf else None
 
 
 class _MessageBase(ServiceBase[TService, NotificationConf]):
-    """
-    消息基类
-    """
+    """Base class for messages."""
 
     def __init__(self):
-        """
-        初始化消息基类，并设置消息通道
-        """
+        """Initializes the message base class and sets the message channel."""
         super().__init__()
         self._channel: MessageChannel | None = None
 
     def get_configs(self) -> dict[str, NotificationConf]:
-        """
-        获取已启用的消息通知渠道的配置字典
+        """Gets the configuration dictionary of enabled message notification channels.
 
-        :return: 返回消息通知的配置字典
+        :return: Returns the configuration dictionary for message notifications.
         """
         configs = ServiceConfigHelper.get_notification_configs()
         if not self._service_name:
@@ -209,20 +205,20 @@ class _MessageBase(ServiceBase[TService, NotificationConf]):
         }
 
     def check_message(self, message: Notification, source: str = None) -> bool:
-        """
-        检查消息渠道及消息类型，判断是否处理消息
+        """Checks the message channel and message type to determine whether to process
+        the message.
 
-        :param message: 要检查的通知消息
-        :param source: 消息来源，可选
-        :return: 返回布尔值，表示是否处理该消息
+        :param message: The notification message to check.
+        :param source: The source of the message, optional.
+        :return: Returns a boolean value indicating whether to process the message.
         """
-        # 检查消息渠道
+        # Check the message channel
         if message.channel and message.channel != self._channel:
             return False
-        # 检查消息来源
+        # Check the message source
         if message.source and message.source != source:
             return False
-        # 不是定向发送时，检查消息类型开关
+        # When not sending directly, check the message type switch
         if not message.userid and message.mtype:
             conf = self.get_config(source)
             if conf:

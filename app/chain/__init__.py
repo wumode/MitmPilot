@@ -251,10 +251,12 @@ class ChainBase:
         return result
 
     def run_module(self, method: str, *args, **kwargs) -> Any:
-        """Run all modules that contain the method and then return the result When
-        kwargs contains the named parameter raise_exception, if the module method throws
-        an exception and raise_exception is True, the exception is thrown
-        synchronously."""
+        """Run all modules that contain the method and then return the result.
+
+        When kwargs contains the named parameter raise_exception, if the module method
+        throws an exception and raise_exception is True, the exception is thrown
+        synchronously.
+        """
         result = None
 
         # Execute plugin module
@@ -270,9 +272,12 @@ class ChainBase:
 
     async def async_run_module(self, method: str, *args, **kwargs) -> Any:
         """Asynchronously run all modules that contain the method and then return the
-        result When kwargs contains the named parameter raise_exception, if the module
-        method throws an exception and raise_exception is True, the exception is thrown
-        synchronously Support mixed calls of asynchronous and synchronous methods."""
+        result.
+
+        When kwargs contains the named parameter raise_exception, if the module method
+        throws an exception and raise_exception is True, the exception is thrown
+        synchronously Support mixed calls of asynchronous and synchronous methods.
+        """
         result = None
 
         # Execute plugin module
@@ -293,13 +298,13 @@ class ChainBase:
     def message_parser(
         self, source: str, body: Any, form: Any, args: Any
     ) -> ComingMessage | None:
-        """Parse the message content, return a dictionary, pay attention to the
-        following.
+        """Parse the message content, return a dictionary, pay attention to the.
 
-        agreed values:
+        following agreed values:
             - userid: User ID
             - username: User name
             - text: Content
+
         :param source: Message source (channel configuration name)
         :param body: Request body
         :param form: Form
@@ -354,7 +359,7 @@ class ChainBase:
         """Prepare notifications based on settings.
 
         :param message: Notification instance
-        :return: A list of specific notifications to send, and a boolean indicating
+        :return: The list of specific notifications to send, and a boolean indicating
             whether the original notification should also be sent.
         """
         specific_notifications = []

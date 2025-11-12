@@ -139,7 +139,7 @@ class EventManager(metaclass=Singleton):
         """Checks if there are any enabled event handlers that can respond to a specific
         event type.
 
-        :param etype: The event type (EventType or ChainEventType)
+        :param etype: The event type
         :return: True if there are available handlers, otherwise False
         """
         if isinstance(etype, ChainEventType):
@@ -162,7 +162,7 @@ class EventManager(metaclass=Singleton):
         """Sends an event, determining whether it is a broadcast or chain event based on
         its type.
 
-        :param etype: The event type (EventType or ChainEventType)
+        :param etype: The event type
         :param data: Optional, event data
         :param priority: Priority for broadcast events, defaults to 10
         :return: The processed event data if it is a chain event; otherwise, None

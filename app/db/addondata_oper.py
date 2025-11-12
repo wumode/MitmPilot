@@ -5,13 +5,11 @@ from app.db.models.addondata import AddonData
 
 
 class AddonDataOper(DbOper):
-    """
-    Addon data management.
-    """
+    """Addon data management."""
 
     def save(self, plugin_id: str, key: str, value: Any):
-        """
-        Save addon data.
+        """Save addon data.
+
         :param plugin_id: Addon ID
         :param key: Data key
         :param value: Data value
@@ -23,8 +21,8 @@ class AddonDataOper(DbOper):
             AddonData(addon_id=plugin_id, key=key, value=value).create(self._db)  # noqa
 
     def get_data(self, plugin_id: str, key: str | None = None) -> Any:
-        """
-        Get addon data.
+        """Get addon data.
+
         :param plugin_id: Addon ID
         :param key: Data key
         """
@@ -37,8 +35,8 @@ class AddonDataOper(DbOper):
             return AddonData.get_addon_data(self._db, plugin_id)  # noqa
 
     def del_data(self, plugin_id: str, key: str | None = None) -> Any:
-        """
-        Delete addon data.
+        """Delete addon data.
+
         :param plugin_id: Addon ID
         :param key: Data key
         """
@@ -48,14 +46,12 @@ class AddonDataOper(DbOper):
             AddonData.del_addon_data(self._db, plugin_id)  # noqa
 
     def truncate(self):
-        """
-        Truncate addon data.
-        """
+        """Truncate addon data."""
         AddonData.truncate(self._db)  # noqa
 
     def get_data_all(self, plugin_id: str) -> Any:
-        """
-        Get all addon data.
+        """Get all addon data.
+
         :param plugin_id: Addon ID
         """
         return AddonData.get_addon_data_by_plugin_id(self._db, plugin_id)  # noqa

@@ -194,8 +194,8 @@ class Settings(BaseSettings, ConfigModel):
         field_name: str,
         raise_exception: bool = False,
     ) -> tuple[Any, bool]:
-        """Generic type conversion function, converts values according to the expected
-        type.
+        """Generic type conversion function that converts values according to the
+        expected type.
 
         Returns default value if conversion fails
         :return: Tuple (converted value, whether update is needed)

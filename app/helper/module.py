@@ -11,23 +11,19 @@ FilterFuncType = Callable[[str, Any], bool]
 
 
 def _default_filter(name: str, obj: Any) -> bool:
-    """
-    默认过滤器
-    """
+    """默认过滤器."""
     return True if name and obj else False
 
 
 class ModuleHelper:
-    """
-    模块动态加载
-    """
+    """模块动态加载."""
 
     @classmethod
     def load(
         cls, package_path: str, filter_func: FilterFuncType = _default_filter
     ) -> list[Any]:
-        """
-        导入模块
+        """导入模块.
+
         :param package_path: 父包名
         :param filter_func: 子模块过滤函数，入参为模块名和模块对象，返回True则导入，否则不导入
         :return: 导入的模块对象列表
@@ -62,8 +58,8 @@ class ModuleHelper:
     def load_with_pre_filter(
         cls, package_path: str, filter_func: FilterFuncType = _default_filter
     ) -> list[Any]:
-        """
-        导入子模块
+        """导入子模块.
+
         :param package_path: 父包名
         :param filter_func: 子模块过滤函数，入参为模块名和模块对象，返回True则导入，否则不导入
         :return: 导入的模块对象列表
@@ -73,7 +69,7 @@ class ModuleHelper:
         packages = importlib.import_module(package_path)
 
         def reload_module_objects(target_module):
-            """加载模块并返回对象"""
+            """加载模块并返回对象."""
             importlib.reload(target_module)
             # reload后，重新过滤已经重新加载后的模块中的对象
             return [
@@ -85,7 +81,7 @@ class ModuleHelper:
             ]
 
         def reload_sub_modules(parent_module, parent_module_name):
-            """重新加载一级子模块"""
+            """重新加载一级子模块."""
             for _, sub_module_name, _ in pkgutil.walk_packages(
                 parent_module.__path__, parent_module_name + "."
             ):
@@ -125,9 +121,7 @@ class ModuleHelper:
 
     @staticmethod
     def dynamic_import_all_modules(base_path: Path, package_name: str):
-        """
-        动态导入目录下所有模块
-        """
+        """动态导入目录下所有模块."""
         modules = []
         # 遍历文件夹，找到所有模块文件
         for file in base_path.glob("*.py"):

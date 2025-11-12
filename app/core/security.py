@@ -34,12 +34,12 @@ api_key_query = APIKeyQuery(
     name="apikey", auto_error=False, scheme_name="api_key_query"
 )
 
-# API TOKEN 通过 QUERY 认证
+# API TOKEN authentication via QUERY
 api_token_query = APIKeyQuery(
     name="token", auto_error=False, scheme_name="api_token_query"
 )
 
-# RESOURCE TOKEN 通过 Cookie 认证
+# RESOURCE TOKEN authentication via Cookie
 resource_token_cookie = APIKeyCookie(
     name=settings.PROJECT_NAME, auto_error=False, scheme_name="resource_token_cookie"
 )
@@ -97,8 +97,11 @@ def __get_api_key(
 def __get_api_token(
     token_query: Annotated[str | None, Security(api_token_query)] = None,
 ) -> str | None:
-    """从 URL 查询参数中获取 API Token :param token_query: 从 URL 中的 `token` 查询参数获取 API Token
-    :return: 返回获取到的 API Token，若无则返回 None."""
+    """Retrieves the API Token from URL query parameters.
+
+    :param token_query: Retrieves the API Token from the `token` query parameter in the URL
+    :return: Returns the retrieved API Token, or None if not found.
+    """
     return token_query
 
 
@@ -140,7 +143,7 @@ def create_access_token(
     :param level: The user's permission level, defaults to 1
     :param purpose: The purpose of the token, "authentication" or "resource"
     :return: The encoded JWT token string
-    :raises ValueError: If expires_delta is negative
+    :raises ValueError: If expires_delta is negative.
     """
     if purpose == "resource":
         default_expire = datetime.timedelta(
@@ -249,7 +252,7 @@ def verify_token(
     # Verify and parse the JWT authentication token
     payload = __verify_token(token=token, purpose="authentication")
 
-    # 如果没有 resource_token，生成并写入到 Cookie
+    # If no resource_token exists, generate and write it to the Cookie
     __set_or_refresh_resource_token_cookie(request, response, payload)
 
     return payload
@@ -273,17 +276,24 @@ def verify_apikey(apikey: Annotated[str, Security(__get_api_key)]) -> str:
 
 
 def verify_apitoken(token: Annotated[str, Security(__get_api_token)]) -> str:
-    """使用 API Token 进行身份认证 :param token: API Token，从 URL 查询参数中获取 token=xxx :return: 验通过的
-    API Token."""
+    """Authenticates using an API Token.
+
+    :param token: The API Token, obtained from the URL query parameter token=xxx
+    :return: The validated API Token.
+    """
     return __verify_key(token, settings.API_TOKEN, "token")
 
 
 def verify_resource_token(
     resource_token: Annotated[str, Security(resource_token_cookie)],
 ) -> schemas.TokenPayload:
-    """验证资源访问令牌（从 Cookie 中获取） :param resource_token: 从 Cookie 中获取的资源访问令牌 :return: 解析后的
-    TokenPayload :raises HTTPException: 如果资源访问令牌无效."""
-    # 验证并解析资源访问令牌
+    """Validates the resource access token (obtained from the Cookie)
+
+    :param resource_token: The resource access token obtained from the Cookie
+    :return: The parsed TokenPayload
+    :raises HTTPException: If the token is invalid.
+    """
+    # Verifies and parses the resource access token
     return __verify_token(token=resource_token, purpose="resource")
 
 

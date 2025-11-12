@@ -8,22 +8,18 @@ from app.utils.singleton import Singleton
 
 
 class SystemConfigOper(DbOper, metaclass=Singleton):
-    """
-    系统配置管理
-    """
+    """系统配置管理."""
 
     def __init__(self):
-        """
-        加载配置到内存
-        """
+        """加载配置到内存."""
         super().__init__()
         self.__SYSTEMCONF = {}
         for item in SystemConfig.list(self._db):  # noqa
             self.__SYSTEMCONF[item.key] = item.value
 
     def set(self, key: str | SystemConfigKey, value: Any) -> bool | None:
-        """
-        设置系统设置
+        """设置系统设置.
+
         :param key: 配置键
         :param value: 配置值
         :return: 是否设置成功（True 成功/False 失败/None 无需更新）
@@ -49,8 +45,8 @@ class SystemConfigOper(DbOper, metaclass=Singleton):
             return True
 
     async def async_set(self, key: str | SystemConfigKey, value: Any) -> bool | None:
-        """
-        异步设置系统设置
+        """异步设置系统设置.
+
         :param key: 配置键
         :param value: 配置值
         :return: 是否设置成功（True 成功/False 失败/None 无需更新）
@@ -76,9 +72,7 @@ class SystemConfigOper(DbOper, metaclass=Singleton):
             return True
 
     def get(self, key: str | SystemConfigKey = None) -> Any:
-        """
-        获取系统设置
-        """
+        """获取系统设置."""
         if isinstance(key, SystemConfigKey):
             key = key.value
         if not key:
@@ -87,16 +81,12 @@ class SystemConfigOper(DbOper, metaclass=Singleton):
         return copy.deepcopy(self.__SYSTEMCONF.get(key))
 
     def all(self):
-        """
-        获取所有系统设置
-        """
+        """获取所有系统设置."""
         # 避免将__SYSTEMCONF内的值引用出去，会导致set时误判没有变动
         return copy.deepcopy(self.__SYSTEMCONF)
 
     def delete(self, key: str | SystemConfigKey) -> bool:
-        """
-        删除系统设置
-        """
+        """删除系统设置."""
         if isinstance(key, SystemConfigKey):
             key = key.value
         # 更新内存

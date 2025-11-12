@@ -20,9 +20,7 @@ _other_version = -5
 class StringUtils:
     @staticmethod
     def num_filesize(text: str | int | float) -> int:
-        """
-        将文件大小文本转化为字节
-        """
+        """将文件大小文本转化为字节."""
         if not text:
             return 0
         if not isinstance(text, str):
@@ -49,9 +47,7 @@ class StringUtils:
 
     @staticmethod
     def str_timelong(time_sec: str | int | float) -> str:
-        """
-        将数字转换为时间描述
-        """
+        """将数字转换为时间描述."""
         if not isinstance(time_sec, int) or not isinstance(time_sec, float):
             try:
                 time_sec = float(time_sec)
@@ -68,9 +64,7 @@ class StringUtils:
 
     @staticmethod
     def str_secends(time_sec: str | int | float) -> str:
-        """
-        将秒转为时分秒字符串
-        """
+        """将秒转为时分秒字符串."""
         hours = time_sec // 3600
         remainder_seconds = time_sec % 3600
         minutes = remainder_seconds // 60
@@ -85,9 +79,7 @@ class StringUtils:
 
     @staticmethod
     def is_chinese(word: str | list) -> bool:
-        """
-        判断是否含有中文
-        """
+        """判断是否含有中文."""
         if not word:
             return False
         if isinstance(word, list):
@@ -100,9 +92,7 @@ class StringUtils:
 
     @staticmethod
     def is_japanese(word: str) -> bool:
-        """
-        判断是否含有日文
-        """
+        """判断是否含有日文."""
         jap = re.compile(r"[\u3040-\u309F\u30A0-\u30FF]")
         if jap.search(word):
             return True
@@ -111,9 +101,7 @@ class StringUtils:
 
     @staticmethod
     def is_korean(word: str) -> bool:
-        """
-        判断是否包含韩文
-        """
+        """判断是否包含韩文."""
         kor = re.compile(r"[\uAC00-\uD7FF]")
         if kor.search(word):
             return True
@@ -122,9 +110,7 @@ class StringUtils:
 
     @staticmethod
     def is_all_chinese(word: str) -> bool:
-        """
-        判断是否全是中文
-        """
+        """判断是否全是中文."""
         for ch in word:
             if ch == " ":
                 continue
@@ -136,16 +122,14 @@ class StringUtils:
 
     @staticmethod
     def is_english_word(word: str) -> bool:
-        """
-        判断是否为英文单词，有空格时返回False
-        """
+        """判断是否为英文单词，有空格时返回False."""
         return word.encode().isalpha()
 
     @staticmethod
     def str_int(text: str) -> int:
-        """
-        web字符串转int
-        :param text:
+        """Web字符串转int.
+
+        :param text: Web字符串
         :return:
         """
         if text:
@@ -159,8 +143,8 @@ class StringUtils:
 
     @staticmethod
     def str_float(text: str) -> float:
-        """
-        web字符串转float
+        """web字符串转float.
+
         :param text:
         :return:
         """
@@ -180,9 +164,7 @@ class StringUtils:
     def clear(
         text: list | str, replace_word: str = "", allow_space: bool = False
     ) -> list | str:
-        """
-        忽略特殊字符
-        """
+        """忽略特殊字符."""
         # 需要忽略的特殊字符
         CONVERT_EMPTY_CHARS = (
             r"[、.。,，·:：;；!！'’\"“”()（）\[\]【】「」\-—―\+\|\\_/&#～~]"
@@ -205,18 +187,14 @@ class StringUtils:
 
     @staticmethod
     def clear_upper(text: str | None) -> str:
-        """
-        去除特殊字符，同时大写
-        """
+        """去除特殊字符，同时大写."""
         if not text:
             return ""
         return StringUtils.clear(text).upper().strip()
 
     @staticmethod
     def str_filesize(size: str | float | int, pre: int = 2) -> str:
-        """
-        将字节计算为文件大小描述（带单位的格式化后返回）
-        """
+        """将字节计算为文件大小描述（带单位的格式化后返回）"""
         if size is None:
             return ""
         size = re.sub(r"\s|B|iB", "", str(size), flags=re.I)
@@ -245,9 +223,7 @@ class StringUtils:
 
     @staticmethod
     def url_equal(url1: str, url2: str) -> bool:
-        """
-        比较两个地址是否为同一个网站
-        """
+        """比较两个地址是否为同一个网站."""
         if not url1 or not url2:
             return False
         if url1.startswith("http"):
@@ -260,9 +236,7 @@ class StringUtils:
 
     @staticmethod
     def get_url_netloc(url: str) -> tuple[str, str]:
-        """
-        获取URL的协议和域名部分
-        """
+        """获取URL的协议和域名部分."""
         if not url:
             return "", ""
         if not url.startswith("http"):
@@ -272,9 +246,7 @@ class StringUtils:
 
     @staticmethod
     def get_url_domain(url: str) -> str:
-        """
-        获取URL的域名部分，只保留最后两级
-        """
+        """获取URL的域名部分，只保留最后两级."""
         if not url:
             return ""
 
@@ -288,9 +260,7 @@ class StringUtils:
 
     @staticmethod
     def get_url_sld(url: str) -> str:
-        """
-        获取URL的二级域名部分，不含端口，若为IP则返回IP
-        """
+        """获取URL的二级域名部分，不含端口，若为IP则返回IP."""
         if not url:
             return ""
         _, netloc = StringUtils.get_url_netloc(url)
@@ -303,9 +273,7 @@ class StringUtils:
 
     @staticmethod
     def get_url_host(url: str) -> str:
-        """
-        获取URL的一级域名
-        """
+        """获取URL的一级域名."""
         if not url:
             return ""
         _, netloc = StringUtils.get_url_netloc(url)
@@ -315,9 +283,7 @@ class StringUtils:
 
     @staticmethod
     def get_base_url(url: str) -> str:
-        """
-        获取URL根地址
-        """
+        """获取URL根地址."""
         if not url:
             return ""
         scheme, netloc = StringUtils.get_url_netloc(url)
@@ -333,12 +299,11 @@ class StringUtils:
 
     @staticmethod
     def generate_random_str(length: int = 16, secure: bool = False) -> str:
-        """
-        生成一个指定长度的随机字符串。
+        """生成一个指定长度的随机字符串。
+
         :param length: 随机字符串的长度。默认为 16。
-        :param secure: 如果为 True，则使用 secrets 模块生成加密安全的随机字符串。
-            如果为 False，则使用 random 模块生成伪随机字符串（速度更快，但安全性较低）。
-            默认为 False。
+        :param secure: 如果为 True，则使用 secrets 模块生成加密安全的随机字符串。 如果为 False，则使用 random
+            模块生成伪随机字符串（速度更快，但安全性较低）。 默认为 False。
         :return: 生成的随机字符串。
         """
         base_str = "ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789"
@@ -359,16 +324,17 @@ class StringUtils:
 
     @staticmethod
     def unify_datetime_str(datetime_str: str) -> str:
-        """
-        日期时间格式化 统一转成 2020-10-14 07:48:04 这种格式
-        # 场景1: 带有时区的日期字符串 eg: Sat, 15 Oct 2022 14:02:54 +0800
-        # 场景2: 中间带T的日期字符串 eg: 2020-10-14T07:48:04
-        # 场景3: 中间带T的日期字符串 eg: 2020-10-14T07:48:04.208
-        # 场景4: 日期字符串以GMT结尾 eg: Fri, 14 Oct 2022 07:48:04 GMT
-        # 场景5: 日期字符串以UTC结尾 eg: Fri, 14 Oct 2022 07:48:04 UTC
-        # 场景6: 日期字符串以Z结尾 eg: Fri, 14 Oct 2022 07:48:04Z
-        # 场景7: 日期字符串为相对时间 eg: 1 month, 2 days ago
-        :param datetime_str:
+        """日期时间格式化 统一转成 2020-10-14 07:48:04 这种格式.
+
+            - 场景1: 带有时区的日期字符串 eg: Sat, 15 Oct 2022 14:02:54 +0800
+            - 场景2: 中间带T的日期字符串 eg: 2020-10-14T07:48:04
+            - 场景3: 中间带T的日期字符串 eg: 2020-10-14T07:48:04.208
+            - 场景4: 日期字符串以GMT结尾 eg: Fri, 14 Oct 2022 07:48:04 GMT
+            - 场景5: 日期字符串以UTC结尾 eg: Fri, 14 Oct 2022 07:48:04 UTC
+            - 场景6: 日期字符串以Z结尾 eg: Fri, 14 Oct 2022 07:48:04Z
+            - 场景7: 日期字符串为相对时间 eg: 1 month, 2 days ago
+
+        :param datetime_str: 日期字符串
         :return:
         """
         # 传入的参数如果是None 或者空字符串 直接返回
@@ -383,8 +349,8 @@ class StringUtils:
 
     @staticmethod
     def format_timestamp(timestamp: str, date_format: str = "%Y-%m-%d %H:%M:%S") -> str:
-        """
-        时间戳转日期
+        """时间戳转日期.
+
         :param timestamp:
         :param date_format:
         :return:
@@ -399,9 +365,9 @@ class StringUtils:
 
     @staticmethod
     def str_to_timestamp(date_str: str) -> float:
-        """
-        日期转时间戳
-        :param date_str:
+        """日期转时间戳.
+
+        :param date_str: 日期字符串
         :return:
         """
         if not date_str:
@@ -414,8 +380,8 @@ class StringUtils:
 
     @staticmethod
     def to_bool(text: str, default_val: bool = False) -> bool:
-        """
-        字符串转bool
+        """字符串转bool.
+
         :param text: 要转换的值
         :param default_val: 默认值
         :return:
@@ -432,20 +398,20 @@ class StringUtils:
 
     @staticmethod
     def str_from_cookiejar(cj: dict) -> str:
-        """
-        将cookiejar转换为字符串
-        :param cj:
+        """将cookiejar转换为字符串.
+
+        :param cj: cookiejar
         :return:
         """
         return "; ".join(["=".join(item) for item in cj.items()])
 
     @staticmethod
     def get_idlist(content: str, dicts: list[dict]):
-        """
-        从字符串中提取id列表
+        """从字符串中提取id列表.
+
         :param content: 字符串
         :param dicts: 字典
-        :return:
+        :return: List of id
         """
         if not content:
             return []
@@ -459,19 +425,17 @@ class StringUtils:
 
     @staticmethod
     def md5_hash(data: Any) -> str:
-        """
-        MD5 HASH
-        """
+        """MD5 HASH."""
         if not data:
             return ""
         return hashlib.md5(str(data).encode()).hexdigest()
 
     @staticmethod
     def str_timehours(minutes: int) -> str:
-        """
-        将分钟转换成小时和分钟
+        """将分钟转换成小时和分钟.
+
         :param minutes:
-        :return:
+        :return: 小时数
         """
         if not minutes:
             return ""
@@ -484,19 +448,17 @@ class StringUtils:
 
     @staticmethod
     def str_amount(amount: object, curr="$") -> str:
-        """
-        格式化显示金额
-        """
+        """格式化显示金额."""
         if not amount:
             return "0"
         return curr + format(amount, ",")
 
     @staticmethod
     def count_words(text: str) -> int:
-        """
-        计算字符串中包含的单词或汉字的数量，需要兼容中英文混合的情况
+        """计算字符串中包含的单词或汉字的数量，需要兼容中英文混合的情况.
+
         :param text: 要计算的字符串
-        :return: 字符串中包含的词数量
+        :return:
         """
         if not text:
             return 0
@@ -520,9 +482,7 @@ class StringUtils:
 
     @staticmethod
     def split_text(text: str, max_length: int) -> Generator:
-        """
-        把文本拆分为固定字节长度的数组，优先按换行拆分，避免单词内拆分
-        """
+        """把文本拆分为固定字节长度的数组，优先按换行拆分，避免单词内拆分."""
         if not text:
             yield ""
         # 分行
@@ -568,16 +528,10 @@ class StringUtils:
 
     @staticmethod
     def escape_markdown(content: str) -> str:
-        """
-        Escapes Markdown characters in a string of Markdown.
-
-        Credits to: simonsmh
+        """Escapes Markdown characters in a string of Markdown.
 
         :param content: The string of Markdown to escape.
-        :type content: :obj:`str`
-
         :return: The escaped string.
-        :rtype: :obj:`str`
         """
 
         parses = re.sub(r"([_*\[\]()~`>#+\-=|.!{}])", r"\\\1", content)
@@ -588,10 +542,9 @@ class StringUtils:
     def get_domain_address(
         address: str, prefix: bool = True
     ) -> tuple[str | None, int | None]:
-        """
-        从地址中获取域名和端口号
-        :param address: 地址
-        :param prefix：返回域名是否要包含协议前缀
+        """从地址中获取域名和端口号.
+
+        :param address: 地址 :param prefix：返回域名是否要包含协议前缀.
         """
         if not address:
             return None, None
@@ -621,9 +574,7 @@ class StringUtils:
 
     @staticmethod
     def str_series(array: list[int]) -> str:
-        """
-        将季集列表转化为字符串简写
-        """
+        """将季集列表转化为字符串简写."""
 
         # 确保数组按照升序排列
         array.sort()
@@ -653,9 +604,7 @@ class StringUtils:
 
     @staticmethod
     def format_ep(nums: list[int]) -> str:
-        """
-        将剧集列表格式化为连续区间
-        """
+        """将剧集列表格式化为连续区间."""
         if not nums:
             return ""
         if len(nums) == 1:
@@ -686,9 +635,7 @@ class StringUtils:
 
     @staticmethod
     def is_number(text: str) -> bool:
-        """
-        判断字符是否为可以转换为整数或者浮点数
-        """
+        """判断字符是否为可以转换为整数或者浮点数."""
         if not text:
             return False
         try:
@@ -716,30 +663,23 @@ class StringUtils:
     def compare_version(
         v1: str, compare_type: str, v2: str, verbose: bool = False
     ) -> tuple[bool | None, str | Exception] | bool | None:
-        """
-        比较两个版本号的大小
+        """比较两个版本号的大小.
 
         :param v1: 比对的来源版本号
         :param v2: 比对的目标版本号
         :param verbose: 是否输出比对结果的时候输出详细消息，默认 False 不输出
-        :param compare_type: 识别模式。支持直接使用符号进行比对
-        'ge' or '>=' ：来源 >= 目标
-        'le' or '<=' ：来源 <= 目标
-        'eq' or '==' ：来源 == 目标
-        'gt' or '>'  ：来源 > 目标
-        'lt' or '<'  ：来源 < 目标
-        :return
+        :param compare_type: 识别模式。支持直接使用符号进行比对 'ge' or '>=' ：来源 >= 目标 'le' or '<=' ：来源
+            <= 目标 'eq' or '==' ：来源 == 目标 'gt' or '>' ：来源 > 目标 'lt' or '<' ：来源 < 目标
+            :return
         """
 
         def __preprocess_version(version: str) -> list:
-            """
-            预处理版本号，去除首尾空字符串与换行符，去除开头大小写v，并拆分版本号
-            """
+            """预处理版本号，去除首尾空字符串与换行符，去除开头大小写v，并拆分版本号."""
             return re.split(r"[.-]", version.strip().lstrip("vV"))
 
         def __conversion_version(version_list) -> list:
-            """
-            英文字符转换为数字
+            """英文字符转换为数字.
+
             :param version_list : 版本号列表，格式：['1', '2', '3', 'beta']
             """
             result = []
@@ -835,7 +775,9 @@ class StringUtils:
                     else:
                         ver_comparison, ver_comparison_err = None, "等于"
 
-            msg = f"版本号 {v1} {ver_comparison if ver_comparison else ver_comparison_err} 目标版本号 {v2} ！"
+            msg = (f"版本号 {v1} "
+                   f"{ver_comparison if ver_comparison else ver_comparison_err} "
+                   f"目标版本号 {v2} ！")
 
             return (
                 (True if ver_comparison else False, msg)
@@ -850,9 +792,7 @@ class StringUtils:
 
     @staticmethod
     def diff_time_str(time_str: str):
-        """
-        输入YYYY-MM-DD HH24:MI:SS 格式的时间字符串，返回距离现在的剩余时间：xx天xx小时xx分钟
-        """
+        """输入YYYY-MM-DD HH24:MI:SS 格式的时间字符串，返回距离现在的剩余时间：xx天xx小时xx分钟."""
         if not time_str:
             return ""
         try:
@@ -876,16 +816,15 @@ class StringUtils:
 
     @staticmethod
     def safe_strip(value) -> str | None:
-        """
-        去除字符串两端的空白字符
+        """去除字符串两端的空白字符.
+
         :return: 如果输入值不是 None，返回去除空白字符后的字符串，否则返回 None
         """
         return value.strip() if value is not None else None
 
     @staticmethod
     def is_valid_html_element(elem) -> bool:
-        """
-        检查elem是否为有效的HTML元素。元素必须为非None并且具有非零长度。
+        """检查elem是否为有效的HTML元素。元素必须为非None并且具有非零长度。
 
         :param elem: 要检查的HTML元素
         :return: 如果elem有效（非None且长度大于0），返回True；否则返回False
@@ -894,8 +833,8 @@ class StringUtils:
 
     @staticmethod
     def is_link(text: str) -> bool:
-        """
-        检查文件是否为链接地址，支持各类协议
+        """检查文件是否为链接地址，支持各类协议.
+
         :param text: 要检查的文本
         :return: 如果URL有效，返回True；否则返回False
         """
@@ -911,9 +850,7 @@ class StringUtils:
 
     @staticmethod
     def is_magnet_link(content: str | bytes) -> bool:
-        """
-        判断内容是否为磁力链接
-        """
+        """判断内容是否为磁力链接."""
         if not content:
             return False
         if isinstance(content, str) and content.startswith("magnet:"):
@@ -924,11 +861,10 @@ class StringUtils:
 
     @staticmethod
     def natural_sort_key(text: str) -> list[int | str]:
-        """
-        自然排序
-        将字符串拆分为数字和非数字部分，数字部分转换为整数，非数字部分转换为小写字母
+        """自然排序 将字符串拆分为数字和非数字部分，数字部分转换为整数，非数字部分转换为小写字母.
+
         :param text: 要处理的字符串
-        :return 用于排序的数字和字符串列表
+        :return: 用于排序的数字和字符串列表
         """
         if text is None:
             return []

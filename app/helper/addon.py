@@ -495,13 +495,13 @@ class PluginHelper(metaclass=WeakSingleton):
     ) -> tuple[bool, str]:
         """Asynchronously installs a plugin, including dependency installation and file
         download, with automatic fallback for related resources.
-
         1. Check and get the specified plugin version, confirm version compatibility.
         2. Get the file list from GitHub (including requirements.txt).
         3. Delete the old plugin directory (backup if not a forced installation).
         4. Download and pre-install dependencies from requirements.txt (if present).
         5. Download and install other plugin files.
         6. Attempt to install dependencies again (to ensure complete installation).
+
         :param pid: Plugin ID
         :param repo_url: Plugin repository address
         :param force_install: Whether to install the plugin forcibly. Disabled by
@@ -797,6 +797,7 @@ class PluginHelper(metaclass=WeakSingleton):
         """
         Processes the plugin list: merges, deduplicates, sorts, and keeps the highest
         version.
+
         :param base_version_plugins: List of base version plugins
         :return: Processed plugin list
         """

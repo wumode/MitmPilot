@@ -32,9 +32,7 @@ class SchedulerChain(ChainBase):
 
 
 class Scheduler(metaclass=SingletonClass):
-    """
-    Scheduler Management
-    """
+    """Scheduler Management."""
 
     def __init__(self):
         # Scheduler service
@@ -53,8 +51,8 @@ class Scheduler(metaclass=SingletonClass):
 
     @eventmanager.register(EventType.ConfigChanged)
     def _handle_config_changed(self, event: Event):
-        """
-        Handle configuration change events
+        """Handle configuration change events.
+
         :param event: Event object
         """
         if not event:
@@ -68,9 +66,7 @@ class Scheduler(metaclass=SingletonClass):
         self.init()
 
     def init(self):
-        """
-        Initialize scheduler service
-        """
+        """Initialize scheduler service."""
 
         # Stop the scheduler service
         self.stop()
@@ -138,9 +134,7 @@ class Scheduler(metaclass=SingletonClass):
             self._scheduler.start()
 
     def __prepare_job(self, job_id: str) -> ScheduledTask | None:
-        """
-        Prepare job
-        """
+        """Prepare job."""
         with self._lock:
             job = self._jobs.get(job_id)
             if not job:
@@ -152,9 +146,7 @@ class Scheduler(metaclass=SingletonClass):
         return job
 
     def __finish_job(self, job_id: str):
-        """
-        Finish job
-        """
+        """Finish job."""
         with self._lock:
             try:
                 self._jobs[job_id].running = False
@@ -162,14 +154,10 @@ class Scheduler(metaclass=SingletonClass):
                 pass
 
     def start(self, job_id: str, *args, **kwargs):
-        """
-        Start job
-        """
+        """Start job."""
 
         def __start_coro(coro):
-            """
-            Start coroutine
-            """
+            """Start coroutine."""
             return asyncio.run_coroutine_threadsafe(coro, Context.loop)
 
         # Get job
@@ -208,10 +196,12 @@ class Scheduler(metaclass=SingletonClass):
         self.__finish_job(job_id)
 
     def remove_plugin_task(self, pid: str, task_id: str | None = None):
-        """
-        Remove jobs, can be a single job (including default job) or all jobs of an addon
-        :param pid: the addon ID
-        :param task_id: Optional, specify the job_id of a single job to remove. If not provided, all jobs of the addon will be removed.
+        """Remove jobs, can be a single job (including default job) or all jobs of an
+        addon.
+
+        :param pid: The addon ID
+        :param task_id: Optional, specify the job_id of a single job to remove. If not
+            provided, all jobs of the addon will be removed.
         """
         if not self._scheduler:
             return
@@ -262,9 +252,7 @@ class Scheduler(metaclass=SingletonClass):
                     )
 
     def update_plugin_tasks(self, pid: str, name: str, services: list[AddonService]):
-        """
-        Update all tasks for an addon
-        """
+        """Update all tasks for an addon."""
         if not self._scheduler or not pid:
             return
         # Remove all jobs of this plugin
@@ -318,9 +306,7 @@ class Scheduler(metaclass=SingletonClass):
         self.remove_plugin_task(data.addon_id)
 
     def list_tasks(self) -> list[schemas.ScheduleInfo]:
-        """
-        List all current jobs
-        """
+        """List all current jobs."""
         if not self._scheduler:
             return []
         with self._lock:
@@ -375,9 +361,7 @@ class Scheduler(metaclass=SingletonClass):
             return schedulers
 
     def stop(self):
-        """
-        Stop the scheduler service
-        """
+        """Stop the scheduler service."""
         with lock:
             try:
                 if self._scheduler:
@@ -395,7 +379,5 @@ class Scheduler(metaclass=SingletonClass):
 
     @staticmethod
     def clear_cache():
-        """
-        Clear cache
-        """
+        """Clear cache."""
         SchedulerChain().clear_cache()

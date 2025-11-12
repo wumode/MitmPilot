@@ -368,7 +368,9 @@ class MemoryBackend(CacheBackend):
     ):
         """Initialize the cache instance.
 
-        :param cache_type: The type of cache, supports 'ttl' (default) and 'lru'.
+        :param cache_type: The type of cache:
+            - 'ttl' (default)
+            - 'lru'
         :param maxsize: The maximum number of entries in the cache.
         :param ttl: The default time-to-live of the cache in seconds.
         """
@@ -1193,8 +1195,7 @@ def cached(
         async def async_is_valid_cache_value(
             _cache_key: str, _cached_value: Any, _cache_region: str
         ) -> bool:
-            """Check if the specified value is a valid cache value (asynchronous
-            version).
+            """Check if the specified value is a valid cache value.
 
             :param _cache_key: The key of the cache.
             :param _cached_value: The value of the cache.

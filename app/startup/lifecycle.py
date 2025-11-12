@@ -10,17 +10,13 @@ from app.startup.scheduler_initializer import init_scheduler, stop_scheduler
 
 
 async def init_extra():
-    """
-    Synchronizes plugins and restarts related dependent services.
-    """
+    """Synchronizes plugins and restarts related dependent services."""
     pass
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Defines the application's lifecycle events.
-    """
+    """Defines the application's lifecycle events."""
     print("Starting up...")
     # Initialize modules
     init_modules()
@@ -34,7 +30,8 @@ async def lifespan(app: FastAPI):
     init_scheduler()
 
     try:
-        # Yield here, indicating that the application has started and control is returned to the FastAPI main event loop
+        # Yield here, indicating that the application has started and control is
+        # returned to the FastAPI main event loop
         yield
     finally:
         print("Shutting down...")

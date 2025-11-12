@@ -13,8 +13,8 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 class RSAUtils:
     @staticmethod
     def generate_rsa_key_pair(key_size: int = 2048) -> tuple[str, str]:
-        """
-        生成RSA密钥对
+        """生成RSA密钥对.
+
         :return: 私钥和公钥（Base64 编码，无标识符）
         """
         # 生成RSA密钥对
@@ -46,8 +46,7 @@ class RSAUtils:
 
     @staticmethod
     def verify_rsa_keys(private_key: str | None, public_key: str | None) -> bool:
-        """
-        使用 RSA 验证私钥和公钥是否匹配
+        """使用 RSA 验证私钥和公钥是否匹配.
 
         :param private_key: 私钥字符串 (Base64 编码，无标识符)
         :param public_key: 公钥字符串 (Base64 编码，无标识符)
@@ -100,8 +99,7 @@ class RSAUtils:
 class HashUtils:
     @staticmethod
     def md5(data: str | bytes, encoding: str = "utf-8") -> str:
-        """
-        生成数据的MD5哈希值，并以字符串形式返回
+        """生成数据的MD5哈希值，并以字符串形式返回.
 
         :param data: 输入的数据，类型为字符串
         :param encoding: 字符串编码类型，默认使用UTF-8
@@ -113,8 +111,7 @@ class HashUtils:
 
     @staticmethod
     def md5_bytes(data: str | bytes, encoding: str = "utf-8") -> bytes:
-        """
-        生成数据的MD5哈希值，并以字节形式返回
+        """生成数据的MD5哈希值，并以字节形式返回.
 
         :param data: 输入的数据，类型为字符串
         :param encoding: 字符串编码类型，默认使用UTF-8
@@ -128,9 +125,7 @@ class HashUtils:
 class CryptoJsUtils:
     @staticmethod
     def bytes_to_key(data: bytes, salt: bytes, output=48) -> bytes:
-        """
-        生成加密/解密所需的密钥和初始化向量 (IV)
-        """
+        """生成加密/解密所需的密钥和初始化向量 (IV)"""
         # extended from https://gist.github.com/gsakkis/4546068
         assert len(salt) == 8, len(salt)
         data += salt
@@ -143,9 +138,7 @@ class CryptoJsUtils:
 
     @staticmethod
     def encrypt(message: bytes, passphrase: bytes) -> bytes:
-        """
-        使用 CryptoJS 兼容的加密策略对消息进行加密
-        """
+        """使用 CryptoJS 兼容的加密策略对消息进行加密."""
         # This is a modified copy of https://stackoverflow.com/questions/36762098/how-to-decrypt-password-from-javascript-cryptojs-aes-encryptpassword-passphras
         # 生成8字节的随机盐值
         salt = Random.new().read(8)
@@ -168,9 +161,7 @@ class CryptoJsUtils:
 
     @staticmethod
     def decrypt(encrypted: str | bytes, passphrase: bytes) -> bytes:
-        """
-        使用 CryptoJS 兼容的解密策略对加密消息进行解密
-        """
+        """使用 CryptoJS 兼容的解密策略对加密消息进行解密."""
         # 确保输入是字节类型
         if isinstance(encrypted, str):
             encrypted = encrypted.encode("utf-8")

@@ -14,38 +14,36 @@ from app.schemas import ConfigChangeEventData
 from app.schemas.types import EventType
 from app.utils.singleton import Singleton
 
-# 类型缓存集合，针对非容器简单类型
+# Type cache collection, for non-container simple types
 _complex_serializable_types = set()
 _simple_serializable_types = set()
 
-# 默认连接参数
+# Default connection parameters
 _socket_timeout = 30
 _socket_connect_timeout = 5
 _health_check_interval = 60
 
 
 def serialize(value: Any) -> bytes:
-    """
-    将值序列化为二进制数据，根据序列化方式标识格式
-    """
+    """Serializes the value into binary data, identifying the format based on the
+    serialization method."""
 
     def _is_container_type(t):
-        """
-        判断是否为容器类型
-        """
+        """Checks if it is a container type."""
         return t in (list, dict, tuple, set)
 
     vt = type(value)
-    # 针对非容器类型使用缓存策略
+    # Use caching strategy for non-container types
     if not _is_container_type(vt):
-        # 如果已知需要复杂序列化
+        # If known to require complex serialization
         if vt in _complex_serializable_types:
             return b"PICKLE" + b"\x00" + pickle.dumps(value)
-        # 如果已知可以简单序列化
+        # If known to be simply serializable
         if vt in _simple_serializable_types:
             json_data = json.dumps(value).encode("utf-8")
             return b"JSON" + b"\x00" + json_data
-        # 对于未知的非容器类型，尝试简单序列化，如抛出异常，再使用复杂序列化
+        # For unknown non-container types, try simple serialization; if it throws an
+        # exception, then use complex serialization
         try:
             json_data = json.dumps(value).encode("utf-8")
             _simple_serializable_types.add(vt)
@@ -54,7 +52,7 @@ def serialize(value: Any) -> bytes:
             _complex_serializable_types.add(vt)
             return b"PICKLE" + b"\x00" + pickle.dumps(value)
     else:
-        # 针对容器类型，每次尝试简单序列化，不使用缓存
+        # For container types, always try simple serialization, do not use cache
         try:
             json_data = json.dumps(value).encode("utf-8")
             return b"JSON" + b"\x00" + json_data
@@ -63,9 +61,8 @@ def serialize(value: Any) -> bytes:
 
 
 def deserialize(value: bytes) -> Any:
-    """
-    将二进制数据反序列化为原始值，根据格式标识区分序列化方式
-    """
+    """Deserializes binary data back to its original value, distinguishing the
+    serialization method by format identifier."""
     format_marker, data = value.split(b"\x00", 1)
     if format_marker == b"JSON":
         return json.loads(data.decode("utf-8"))
@@ -76,27 +73,22 @@ def deserialize(value: bytes) -> Any:
 
 
 class RedisHelper(metaclass=Singleton):
-    """
-    Redis连接和操作助手类，单例模式
+    """Redis connection and operation helper class, singleton pattern.
 
-    特性：
-    - 管理Redis连接池和客户端
-    - 提供序列化和反序列化功能
-    - 支持内存限制和淘汰策略设置
-    - 提供键名生成和区域管理功能
+    Features:
+    - Manages Redis connection pool and client
+    - Provides serialization and deserialization functions
+    - Supports memory limit and eviction policy settings
+    - Provides key generation and region management functions
     """
 
     def __init__(self):
-        """
-        初始化Redis助手实例
-        """
+        """Initializes the Redis helper instance."""
         self.redis_url = settings.CACHE_BACKEND_URL
         self.client = None
 
     def _connect(self):
-        """
-        建立Redis连接
-        """
+        """Establishes a Redis connection."""
         try:
             if self.client is None:
                 self.client = redis.Redis.from_url(
@@ -106,7 +98,7 @@ class RedisHelper(metaclass=Singleton):
                     socket_connect_timeout=_socket_connect_timeout,
                     health_check_interval=_health_check_interval,
                 )
-                # 测试连接，确保Redis可用
+                # Test connection to ensure Redis is available
                 self.client.ping()
                 logger.info(f"Successfully connected to Redis：{self.redis_url}")
                 self.set_memory_limit()
@@ -117,9 +109,9 @@ class RedisHelper(metaclass=Singleton):
 
     @eventmanager.register(EventType.ConfigChanged)
     def handle_config_changed(self, event: Event):
-        """
-        处理配置变更事件，更新Redis设置
-        :param event: 事件对象
+        """Handles configuration change events, updates Redis settings.
+
+        :param event: Event object
         """
         if not event:
             return
@@ -130,18 +122,19 @@ class RedisHelper(metaclass=Singleton):
             "CACHE_REDIS_MAXMEMORY",
         ]:
             return
-        logger.info("配置变更，重连Redis...")
+        logger.info("Configuration changed, reconnecting to Redis...")
         self.close()
         self._connect()
 
     def set_memory_limit(self, policy: str | None = "allkeys-lru"):
-        """
-        动态设置Redis最大内存和内存淘汰策略
+        """Dynamically sets Redis max memory and eviction policy.
 
-        :param policy: 淘汰策略（如'allkeys-lru'）
+        :param policy: Eviction policy (e.g., 'allkeys-lru')
         """
         try:
-            # 如果有显式值，则直接使用，为0时说明不限制，如果未配置，开启 LARGE_MEMORY_MODE 时为"1024mb"，未开启时为"256mb"
+            # If there is an explicit value, use it directly. If it is 0,
+            # it means no limit. If not configured, it is "1024mb"
+            # when LARGE_MEMORY_MODE is enabled, and "256mb" when not enabled.
             maxmemory = settings.CACHE_REDIS_MAXMEMORY or (
                 "1024mb" if settings.LARGE_MEMORY_MODE else "256mb"
             )
@@ -153,24 +146,18 @@ class RedisHelper(metaclass=Singleton):
 
     @staticmethod
     def __get_region(region: str | None = None):
-        """
-        获取缓存的区
-        """
+        """Gets the cached region."""
         return f"region:{quote(region)}" if region else "region:DEFAULT"
 
     def __make_redis_key(self, region: str, key: str) -> str:
-        """
-        获取缓存Key
-        """
-        # 使用region作为缓存键的一部分
+        """Gets the cache key."""
+        # Use region as part of the cache key
         region = self.__get_region(region)
         return f"{region}:key:{quote(key)}"
 
     @staticmethod
     def __get_original_key(redis_key: str | bytes) -> str:
-        """
-        从Redis键中提取原始key
-        """
+        """Extracts the original key from the Redis key."""
         if isinstance(redis_key, bytes):
             redis_key = redis_key.decode("utf-8")
         try:
@@ -188,19 +175,18 @@ class RedisHelper(metaclass=Singleton):
         region: str = "DEFAULT",
         **kwargs,
     ) -> None:
-        """
-        设置缓存
+        """Sets the cache.
 
-        :param key: 缓存的键
-        :param value: 缓存的值
-        :param ttl: 缓存的存活时间，单位秒
-        :param region: 缓存的区
-        :param kwargs: 其他参数
+        :param key: Cache key
+        :param value: Cache value
+        :param ttl: Cache time-to-live, in seconds
+        :param region: Cache region
+        :param kwargs: Other parameters
         """
         try:
             self._connect()
             redis_key = self.__make_redis_key(region, key)
-            # 对值进行序列化
+            # Serialize the value
             serialized_value = serialize(value)
             kwargs.pop("maxsize", None)
             self.client.set(redis_key, serialized_value, ex=ttl, **kwargs)
@@ -208,12 +194,11 @@ class RedisHelper(metaclass=Singleton):
             logger.error(f"Failed to set key: {key} in region: {region}, error: {e}")
 
     def exists(self, key: str, region: str = "DEFAULT") -> bool:
-        """
-        判断缓存键是否存在
+        """Checks if the cache key exists.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
-        :return: 存在返回True，否则返回False
+        :param key: Cache key
+        :param region: Cache region
+        :return: True if exists, False otherwise
         """
         try:
             self._connect()
@@ -224,12 +209,11 @@ class RedisHelper(metaclass=Singleton):
             return False
 
     def get(self, key: str, region: str = "DEFAULT") -> Any | None:
-        """
-        获取缓存的值
+        """Gets the cache value.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
-        :return: 返回缓存的值，如果缓存不存在返回None
+        :param key: Cache key
+        :param region: Cache region
+        :return: Returns the cached value, or None if the cache does not exist
         """
         try:
             self._connect()
@@ -243,11 +227,10 @@ class RedisHelper(metaclass=Singleton):
             return None
 
     def delete(self, key: str, region: str = "DEFAULT") -> None:
-        """
-        删除缓存
+        """Deletes the cache.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
+        :param key: Cache key
+        :param region: Cache region
         """
         try:
             self._connect()
@@ -257,10 +240,9 @@ class RedisHelper(metaclass=Singleton):
             logger.error(f"Failed to delete key: {key} in region: {region}, error: {e}")
 
     def clear(self, region: str | None = None) -> None:
-        """
-        清除指定区域的缓存或全部缓存
+        """Clears the cache for the specified region or all cache.
 
-        :param region: 缓存的区
+        :param region: Cache region
         """
         try:
             self._connect()
@@ -279,11 +261,10 @@ class RedisHelper(metaclass=Singleton):
             logger.error(f"Failed to clear cache, region: {region}, error: {e}")
 
     def items(self, region: str | None = None) -> Generator[tuple[str, Any]]:
-        """
-        获取指定区域的所有缓存键值对
+        """Gets all cached key-value pairs for the specified region.
 
-        :param region: 缓存的区
-        :return: 返回键值对生成器
+        :param region: Cache region
+        :return: Returns a key-value pair generator
         """
         try:
             self._connect()
@@ -305,9 +286,7 @@ class RedisHelper(metaclass=Singleton):
             )
 
     def test(self) -> bool:
-        """
-        测试Redis连接性
-        """
+        """Tests Redis connectivity."""
         try:
             self._connect()
             return True
@@ -316,9 +295,7 @@ class RedisHelper(metaclass=Singleton):
             return False
 
     def close(self) -> None:
-        """
-        关闭Redis客户端的连接池
-        """
+        """Closes the Redis client's connection pool."""
         if self.client:
             self.client.close()
             self.client = None
@@ -326,28 +303,23 @@ class RedisHelper(metaclass=Singleton):
 
 
 class AsyncRedisHelper(metaclass=Singleton):
-    """
-    异步Redis连接和操作助手类，单例模式
+    """Asynchronous Redis connection and operation helper class, singleton pattern.
 
-    特性：
-    - 管理异步Redis连接池和客户端
-    - 提供序列化和反序列化功能
-    - 支持内存限制和淘汰策略设置
-    - 提供键名生成和区域管理功能
-    - 所有操作都是异步的
+    Features:
+    - Manages asynchronous Redis connection pool and client
+    - Provides serialization and deserialization functions
+    - Supports memory limit and eviction policy settings
+    - Provides key generation and region management functions
+    - All operations are asynchronous
     """
 
     def __init__(self):
-        """
-        初始化异步Redis助手实例
-        """
+        """Initializes the asynchronous Redis helper instance."""
         self.redis_url = settings.CACHE_BACKEND_URL
         self.client: Redis | None = None
 
     async def _connect(self):
-        """
-        建立异步Redis连接
-        """
+        """Establishes an asynchronous Redis connection."""
         try:
             if self.client is None:
                 self.client = Redis.from_url(
@@ -357,7 +329,7 @@ class AsyncRedisHelper(metaclass=Singleton):
                     socket_connect_timeout=_socket_connect_timeout,
                     health_check_interval=_health_check_interval,
                 )
-                # 测试连接，确保Redis可用
+                # Test connection to ensure Redis is available
                 await self.client.ping()
                 logger.info(
                     f"Successfully connected to Redis (async)：{self.redis_url}"
@@ -370,9 +342,9 @@ class AsyncRedisHelper(metaclass=Singleton):
 
     @eventmanager.register(EventType.ConfigChanged)
     async def handle_config_changed(self, event: Event):
-        """
-        处理配置变更事件，更新Redis设置
-        :param event: 事件对象
+        """Handles configuration change events, updates Redis settings.
+
+        :param event: Event object
         """
         if not event:
             return
@@ -383,18 +355,19 @@ class AsyncRedisHelper(metaclass=Singleton):
             "CACHE_REDIS_MAXMEMORY",
         ]:
             return
-        logger.info("配置变更，重连Redis (async)...")
+        logger.info("Configuration changed, reconnecting to Redis (async)...")
         await self.close()
         await self._connect()
 
     async def set_memory_limit(self, policy: str = "allkeys-lru"):
-        """
-        动态设置Redis最大内存和内存淘汰策略
+        """Dynamically sets Redis max memory and eviction policy.
 
-        :param policy: 淘汰策略（如'allkeys-lru'）
+        :param policy: Eviction policy (e.g., 'allkeys-lru')
         """
         try:
-            # 如果有显式值，则直接使用，为0时说明不限制，如果未配置，开启 LARGE_MEMORY_MODE 时为"1024mb"，未开启时为"256mb"
+            # If there is an explicit value, use it directly. If it is 0, it means no
+            # limit. If not configured, it is "1024mb" when LARGE_MEMORY_MODE is
+            # enabled, and "256mb" when not enabled.
             maxmemory = settings.CACHE_REDIS_MAXMEMORY or (
                 "1024mb" if settings.LARGE_MEMORY_MODE else "256mb"
             )
@@ -408,24 +381,18 @@ class AsyncRedisHelper(metaclass=Singleton):
 
     @staticmethod
     def __get_region(region: str | None = "DEFAULT"):
-        """
-        获取缓存的区
-        """
+        """Gets the cached region."""
         return f"region:{region}" if region else "region:default"
 
     def __make_redis_key(self, region: str, key: str) -> str:
-        """
-        获取缓存Key
-        """
-        # 使用region作为缓存键的一部分
+        """Gets the cache key."""
+        # Use region as part of the cache key
         region = self.__get_region(region)
         return f"{region}:key:{quote(key)}"
 
     @staticmethod
     def __get_original_key(redis_key: str | bytes) -> str:
-        """
-        从Redis键中提取原始key
-        """
+        """Extracts the original key from the Redis key."""
         if isinstance(redis_key, bytes):
             redis_key = redis_key.decode("utf-8")
         try:
@@ -443,19 +410,18 @@ class AsyncRedisHelper(metaclass=Singleton):
         region: str = "DEFAULT",
         **kwargs,
     ) -> None:
-        """
-        异步设置缓存
+        """Asynchronously sets the cache.
 
-        :param key: 缓存的键
-        :param value: 缓存的值
-        :param ttl: 缓存的存活时间，单位秒
-        :param region: 缓存的区
-        :param kwargs: 其他参数
+        :param key: Cache key
+        :param value: Cache value
+        :param ttl: Cache time-to-live, in seconds
+        :param region: Cache region
+        :param kwargs: Other parameters
         """
         try:
             await self._connect()
             redis_key = self.__make_redis_key(region, key)
-            # 对值进行序列化
+            # Serialize the value
             serialized_value = serialize(value)
             kwargs.pop("maxsize", None)
             await self.client.set(redis_key, serialized_value, ex=ttl, **kwargs)
@@ -465,12 +431,11 @@ class AsyncRedisHelper(metaclass=Singleton):
             )
 
     async def exists(self, key: str, region: str = "DEFAULT") -> bool:
-        """
-        异步判断缓存键是否存在
+        """Asynchronously checks if the cache key exists.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
-        :return: 存在返回True，否则返回False
+        :param key: Cache key
+        :param region: Cache region
+        :return: True if exists, False otherwise
         """
         try:
             await self._connect()
@@ -484,12 +449,11 @@ class AsyncRedisHelper(metaclass=Singleton):
             return False
 
     async def get(self, key: str, region: str = "DEFAULT") -> Any | None:
-        """
-        异步获取缓存的值
+        """Asynchronously gets the cache value.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
-        :return: 返回缓存的值，如果缓存不存在返回None
+        :param key: Cache key
+        :param region: Cache region
+        :return: Returns the cached value, or None if the cache does not exist
         """
         try:
             await self._connect()
@@ -505,11 +469,10 @@ class AsyncRedisHelper(metaclass=Singleton):
             return None
 
     async def delete(self, key: str, region: str = "DEFAULT") -> None:
-        """
-        异步删除缓存
+        """Asynchronously deletes the cache.
 
-        :param key: 缓存的键
-        :param region: 缓存的区
+        :param key: Cache key
+        :param region: Cache region
         """
         try:
             await self._connect()
@@ -521,10 +484,9 @@ class AsyncRedisHelper(metaclass=Singleton):
             )
 
     async def clear(self, region: str | None = None) -> None:
-        """
-        异步清除指定区域的缓存或全部缓存
+        """Asynchronously clears the cache for the specified region or all cache.
 
-        :param region: 缓存的区
+        :param region: Cache region
         """
         try:
             await self._connect()
@@ -543,11 +505,10 @@ class AsyncRedisHelper(metaclass=Singleton):
             logger.error(f"Failed to clear cache (async), region: {region}, error: {e}")
 
     async def items(self, region: str | None = None) -> AsyncGenerator[tuple[str, Any]]:
-        """
-        获取指定区域的所有缓存键值对
+        """Gets all cached key-value pairs for the specified region.
 
-        :param region: 缓存的区
-        :return: 返回键值对生成器
+        :param region: Cache region
+        :return: Returns a key-value pair generator
         """
         try:
             await self._connect()
@@ -569,9 +530,7 @@ class AsyncRedisHelper(metaclass=Singleton):
             )
 
     async def test(self) -> bool:
-        """
-        异步测试Redis连接性
-        """
+        """Asynchronously tests Redis connectivity."""
         try:
             await self._connect()
             return True
@@ -580,9 +539,7 @@ class AsyncRedisHelper(metaclass=Singleton):
             return False
 
     async def close(self) -> None:
-        """
-        关闭异步Redis客户端的连接池
-        """
+        """Closes the asynchronous Redis client's connection pool."""
         if self.client:
             await self.client.close()
             self.client = None

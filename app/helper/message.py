@@ -362,12 +362,14 @@ class MessageQueueManager(metaclass=SingletonClass):
                 parsed.append((start_h, start_m, end_h, end_m))
             except ValueError as e:
                 logger.error(
-                    f"Error parsing time period: {period}. Error: {str(e)}. Skipping this period."
+                    f"Error parsing time period: {period}. "
+                    f"Error: {str(e)}. Skipping this period."
                 )
                 continue
             except Exception as e:
                 logger.error(
-                    f"Unexpected error parsing time period: {period}. Error: {str(e)}. Skipping this period."
+                    f"Unexpected error parsing time period: {period}. "
+                    f"Error: {str(e)}. Skipping this period."
                 )
                 continue
         return parsed
@@ -464,8 +466,9 @@ class MessageHelper(metaclass=Singleton):
         title: str = None,
         note: list | dict = None,
     ):
-        """Put a message. :param message: The message content.
+        """Put a message.
 
+        :param message: The message content.
         :param role: The message channel.
                - system: System message.
                - plugin: Plugin message.

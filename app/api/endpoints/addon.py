@@ -31,10 +31,11 @@ router = APIRouter()
 
 
 def _update_plugin_api_routes(plugin_id: str | None, action: str):
-    """Plugin API route registration and removal :param plugin_id: Plugin ID, if action
-    is "add" and plugin_id is None, then process all plugins.
+    """Plugin API route registration and removal :param plugin_id: Plugin ID.
 
-    If the action is "remove", plugin_id must be     a valid plugin ID
+        - If the action is "add" and plugin_id is None, then process all plugins.
+        - If the action is "remove", plugin_id must be a valid plugin ID
+
     :param action: "add" or "remove", determines whether to add or remove the route
     """
     if action not in {"add", "remove"}:
@@ -74,9 +75,10 @@ def _update_plugin_api_routes(plugin_id: str | None, action: str):
 
 
 def _remove_routes(plugin_id: str) -> bool:
-    """Remove routes related to a single addon :param plugin_id: The addon ID :return:
+    """Remove routes related to a single addon.
 
-    Whether any routes have been removed.
+    :param plugin_id: The addon ID
+    :return: Whether any routes have been removed.
     """
     if not plugin_id:
         return False
@@ -94,7 +96,10 @@ def _remove_routes(plugin_id: str) -> bool:
 
 
 def remove_plugin_api(plugin_id: str):
-    """Dynamically remove the API of a single addon :param plugin_id: The addon ID."""
+    """Dynamically remove the API of a single addon.
+
+    :param plugin_id: The addon ID.
+    """
     _update_plugin_api_routes(plugin_id, action="remove")
 
 
@@ -106,7 +111,10 @@ async def all_addons(
 ) -> list[schemas.Addon]:
     """Query all addons, including local and online addons.
 
-    Addon states: installed, market, all
+    Addon states:
+        - 'installed'
+        - 'market'
+        - 'all'
     """
     # Local addons
     local_plugins = Context.addonmanager.get_local_addons()
@@ -420,7 +428,7 @@ def plugin_dashboard(
 
 @router.get("/file/{plugin_id}/{filepath:path}", summary="Get plugin static file")
 async def plugin_static_file(plugin_id: str, filepath: str):
-    """Get plugin static file."""
+    """Get plugin static files."""
     # Basic security check
     if ".." in filepath or ".." in plugin_id:
         logger.warning(
