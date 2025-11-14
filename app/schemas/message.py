@@ -32,7 +32,7 @@ class ComingMessage(BaseModel):
     # Chat ID (for locating the chat during callback)
     chat_id: str | None = None
     # Complete callback query information (raw data)
-    callback_query: dict | None = None
+    callback_query: dict = Field(default_factory=dict)
 
     def to_dict(self):
         """Convert to dictionary."""
@@ -179,8 +179,8 @@ class ChannelCapabilityManager:
             max_button_rows=10,
             max_button_text_length=30,
         ),
-        MessageChannel.Wechat: ChannelCapabilities(
-            channel=MessageChannel.Wechat,
+        MessageChannel.WeChat: ChannelCapabilities(
+            channel=MessageChannel.WeChat,
             capabilities={
                 ChannelCapability.IMAGES,
                 ChannelCapability.LINKS,

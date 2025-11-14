@@ -119,3 +119,29 @@ class AddonServiceRegistration(ChainEventData):
     services: list[AddonService] = Field(
         default_factory=list, description="services to register"
     )
+
+
+class CommandRegisterEventData(ChainEventData):
+    """Data model for CommandRegister event.
+
+    Attributes:
+        # Input parameters
+        commands (dict): Menu commands
+        origin (str): Event source, can be Chain or a specific module name
+        service (str): Service name
+
+        # Output parameters
+        source (str): Interception source
+        cancel (bool): Whether to cancel authentication, default value is False
+    """
+
+    # Input parameters
+    commands: dict[str, dict] = Field(..., description="Menu commands")
+    origin: str = Field(..., description="Event source")
+    service: str = Field(..., description="Service name")
+
+    # Output parameters
+    cancel: bool = Field(default=False, description="Whether to cancel registration")
+    source: str = Field(
+        default="Unknown interception source", description="Interception source"
+    )

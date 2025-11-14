@@ -43,12 +43,12 @@ class SystemUtils:
             output = result.stdout + result.stderr
             return True, output
         except subprocess.CalledProcessError as e:
-            error_message = (
-                f"Command: {' '.join(pip_command)}, failed to execute, error message: {e.stderr.strip()}"
-            )
+            error_message = f"Command: {' '.join(pip_command)}, failed to execute, error message: {e.stderr.strip()}"
             return False, error_message
         except Exception as e:
-            error_message = f"Unknown error, command: {' '.join(pip_command)}, error: {str(e)}"
+            error_message = (
+                f"Unknown error, command: {' '.join(pip_command)}, error: {str(e)}"
+            )
             return False, error_message
 
     @staticmethod

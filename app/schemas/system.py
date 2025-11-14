@@ -4,9 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class ServiceInfo(BaseModel):
-    """
-    封装服务相关信息的数据类
-    """
+    """封装服务相关信息的数据类."""
 
     # 名称
     name: str
@@ -21,9 +19,7 @@ class ServiceInfo(BaseModel):
 
 
 class NotificationConf(BaseModel):
-    """
-    通知配置
-    """
+    """通知配置."""
 
     # 名称
     name: str
@@ -32,15 +28,13 @@ class NotificationConf(BaseModel):
     # 配置
     config: dict | None = Field(default_factory=dict)
     # 场景开关
-    switchs: list | None = Field(default_factory=list)
+    switches: list | None = Field(default_factory=list)
     # 是否启用
     enabled: bool | None = False
 
 
 class NotificationSwitchConf(BaseModel):
-    """
-    通知场景开关配置
-    """
+    """通知场景开关配置."""
 
     # 场景名称
     type: str = None

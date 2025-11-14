@@ -1,6 +1,5 @@
 import datetime
 import random
-from string.templatelib import Template
 
 
 class TimerUtils:

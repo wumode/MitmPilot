@@ -59,7 +59,7 @@ class ModuleManager(metaclass=Singleton):
         for module_id, module in self._running_modules.items():
             if hasattr(module, "stop"):
                 try:
-                    module.stop_addon()
+                    module.stop()
                     logger.debug(f"Module Stopped: {module_id}")
                 except Exception as err:
                     logger.error(

@@ -128,8 +128,8 @@ class ConfigModel(BaseModel):
     CACHE_REDIS_MAXMEMORY: str | None = None
     # Temporary file retention days
     TEMP_FILE_DAYS: int = 3
-    # Metadata recognition cache expiration time (hours), 0 for automatic.
-    META_CACHE_EXPIRE: int = 0
+    # Cache expiration time (hours), 0 for automatic.
+    CACHE_EXPIRE: int = 0
     # Global image cache retention days
     GLOBAL_IMAGE_CACHE_DAYS: int = 7
 
@@ -431,7 +431,11 @@ class Settings(BaseSettings, ConfigModel):
     @property
     def CONF(self) -> SystemConfModel:
         """Returns system configuration based on memory mode."""
-        return SystemConfModel(scheduler=100, threadpool=100)
+        return SystemConfModel(
+            scheduler=100,
+            threadpool=100,
+            cache_lifespan=(self.CACHE_EXPIRE or 72) * 3600,
+        )
 
     @property
     def PROXY(self) -> dict | None:

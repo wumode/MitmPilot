@@ -39,15 +39,15 @@ class ServiceConfigHelper:
     def get_notification_switches() -> list[NotificationSwitchConf]:
         """Retrieves the switches for message notification scenarios."""
         return ServiceConfigHelper.get_configs(
-            SystemConfigKey.NotificationSwitchs, NotificationSwitchConf
+            SystemConfigKey.NotificationSwitches, NotificationSwitchConf
         )
 
     @staticmethod
     def get_notification_switch(mtype: NotificationType) -> str | None:
         """Retrieves the switch for a specified type of message notification
         scenario."""
-        switchs = ServiceConfigHelper.get_notification_switches()
-        for switch in switchs:
+        switches = ServiceConfigHelper.get_notification_switches()
+        for switch in switches:
             if switch.type == mtype.value:
                 return switch.action
         return None

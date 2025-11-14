@@ -21,11 +21,13 @@ from app.core.security import verify_apikey, verify_resource_token, verify_token
 from app.db.models import User
 from app.db.systemconfig_oper import SystemConfigOper
 from app.db.user_oper import (
+    get_current_active_superuser,
     get_current_active_superuser_async,
     get_current_active_user_async,
 )
 from app.helper.message import MessageHelper
 from app.log import logger
+from app.scheduler import Scheduler
 from app.schemas import ConfigChangeEventData
 from app.schemas.types import EventType, SystemConfigKey
 from app.utils.crypto import HashUtils
@@ -448,3 +450,12 @@ def get_rules(_: schemas.TokenPayload = Depends(verify_apikey)) -> PlainTextResp
     rules = Context.addonmanager.get_addon_rules()
     res = yaml.dump({"payload": rules}, allow_unicode=True)
     return PlainTextResponse(content=res, media_type="application/x-yaml")
+
+
+@router.get("/runscheduler", summary="Run service", response_model=schemas.Response)
+def run_scheduler(jobid: str, _: User = Depends(get_current_active_superuser)):  # noqa: B008
+    """Execute command (administrator only)"""
+    if not jobid:
+        return schemas.Response(success=False, message="Command cannot be empty!")
+    Scheduler().start(jobid)
+    return schemas.Response(success=True)

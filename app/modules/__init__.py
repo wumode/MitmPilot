@@ -131,7 +131,7 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
     def get_instances(self) -> dict[str, TService]:
         """Gets the list of service instances.
 
-        :return: Returns the list of service instances.
+        :return: The list of service instances.
         """
         instances = self._instances if self._instances else {}
         return instances
@@ -141,7 +141,7 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
 
         :param name: The name of the instance, optional. If None, the default instance
             is returned.
-        :return: Returns the matching service instance, or None if it does not exist.
+        :return: The matching service instance, or None if it does not exist.
         """
         if not self._instances:
             return None
@@ -163,7 +163,7 @@ class ServiceBase[TService, TConf](metaclass=ABCMeta):
 
         :param name: The name of the configuration, optional. If None, the default
             service configuration is returned.
-        :return: Returns the matching configuration, or None if it does not exist.
+        :return: The matching configuration, or None if it does not exist.
         """
         if not self._configs:
             return None
@@ -193,7 +193,7 @@ class _MessageBase(ServiceBase[TService, NotificationConf]):
     def get_configs(self) -> dict[str, NotificationConf]:
         """Gets the configuration dictionary of enabled message notification channels.
 
-        :return: Returns the configuration dictionary for message notifications.
+        :return: The configuration dictionary for message notifications.
         """
         configs = ServiceConfigHelper.get_notification_configs()
         if not self._service_name:
@@ -210,7 +210,7 @@ class _MessageBase(ServiceBase[TService, NotificationConf]):
 
         :param message: The notification message to check.
         :param source: The source of the message, optional.
-        :return: Returns a boolean value indicating whether to process the message.
+        :return: Whether to process the message.
         """
         # Check the message channel
         if message.channel and message.channel != self._channel:
@@ -222,7 +222,7 @@ class _MessageBase(ServiceBase[TService, NotificationConf]):
         if not message.userid and message.mtype:
             conf = self.get_config(source)
             if conf:
-                switchs = conf.switchs or []
-                if message.mtype.value not in switchs:
+                switches = conf.switches or []
+                if message.mtype.value not in switches:
                     return False
         return True

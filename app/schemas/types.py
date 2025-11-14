@@ -1,87 +1,87 @@
 from enum import Enum
 
 
-# 系统配置Key字典
+# System configuration key dictionary
 class SystemConfigKey(Enum):
-    # 用户已安装的插件
+    # User installed addons
     UserInstalledAddons = "UserInstalledAddons"
-    # 插件配置前缀
+    # Addon configuration prefix
     AddonConfigPrefix = "addon"
-    # 通知消息格式模板
+    # Notification message format template
     NotificationTemplates = "NotificationTemplates"
-    # 通知发送时间
+    # Notification send time
     NotificationSendTime = "NotificationSendTime"
-    # 消息通知配置
+    # Message notification configuration
     Notifications = "Notifications"
-    # 通知场景开关设置
-    NotificationSwitchs = "NotificationSwitchs"
-    # 插件安装统计
+    # Notification scenario switch settings
+    NotificationSwitches = "NotificationSwitches"
+    # Plugin installation statistics
     PluginInstallReport = "PluginInstallReport"
-    # 插件文件夹分组配置
+    # Plugin folder grouping configuration
     PluginFolders = "PluginFolders"
 
 
-# 用户配置Key字典
+# User configuration key dictionary
 class UserConfigKey(Enum):
-    # 监控面板
+    # Monitoring dashboard
     Dashboard = "Dashboard"
 
 
-# 同步链式事件
+# Synchronous chained events
 class ChainEventType(Enum):
-    # 认证验证
+    # Authentication verification
     AuthVerification = "auth.verification"
-    # 认证拦截
+    # Authentication interception
     AuthIntercept = "auth.intercept"
-    # 命令注册
+    # Command registration
     CommandRegister = "command.register"
-    # 插件服务注册
+    # Addon service registration
     AddonServiceRegister = "service.register"
-    # 插件服务注销
+    # Addon service deregistration
     AddonServiceDeregister = "service.deregister"
 
 
-# 异步广播事件
+# Asynchronous broadcast events
 class EventType(Enum):
-    # 插件需要重载
+    # Addon needs to be reloaded
     AddonReload = "addon.reload"
-    # 触发插件动作
+    # Trigger addon action
     AddonAction = "addon.action"
-    # 插件触发事件
+    # Addon triggered event
     AddonTriggered = "addon.triggered"
-    # 执行命令
+    # Execute command
     CommandExcute = "command.excute"
-    # 收到用户外来消息
+    # Received external user message
     UserMessage = "user.message"
-    # 收到Webhook消息
+    # Received Webhook message
     WebhookMessage = "webhook.message"
-    # 发送消息通知
+    # Send message notification
     NoticeMessage = "notice.message"
-    # 系统错误
+    # System error
     SystemError = "system.error"
-    # 模块需要重载
+    # Module needs to be reloaded
     ModuleReload = "module.reload"
-    # 配置项更新
+    # Configuration item updated
     ConfigChanged = "config.updated"
-    # 消息交互动作
+    # Message interaction action
     MessageAction = "message.action"
-    # 执行工作流
+    # Execute workflow
     WorkflowExecute = "workflow.execute"
 
 
-# 消息类型
+# Message type
 class NotificationType(Enum):
-    # 插件消息
+    # Addon message
     Addon = "Addon"
-    # 其它消息
+    # Other messages
     Other = "Other"
 
 
-# 消息渠道
+# Message channel
 class MessageChannel(Enum):
-    """消息渠道."""
+    """Message channel."""
 
-    Wechat = "Wechat"
+    WeChat = "WeChat"
     Telegram = "Telegram"
     Slack = "Slack"
     SynologyChat = "SynologyChat"
@@ -90,13 +90,15 @@ class MessageChannel(Enum):
     WebPush = "WebPush"
 
 
-# 模块类型
+# Module type
 class ModuleType(Enum):
-    # 其它
+    # Message service
+    Notification = "notification"
+    # Other
     Other = "other"
 
 
-# 其他杂项模块类型
+# Other miscellaneous module types
 class OtherModulesType(Enum):
     # PostgreSQL
     PostgreSQL = "PostgreSQL"

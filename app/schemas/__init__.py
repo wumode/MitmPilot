@@ -10,6 +10,7 @@ from .event import AddonServiceRegistration as AddonServiceRegistration
 from .event import AuthCredentials as AuthCredentials
 from .event import AuthInterceptCredentials as AuthInterceptCredentials
 from .event import ChainEventData as ChainEventData
+from .event import CommandRegisterEventData as CommandRegisterEventData
 from .event import ConfigChangeEventData as ConfigChangeEventData
 from .exception import ImmediateException as ImmediateException
 from .exception import LimitException as LimitException

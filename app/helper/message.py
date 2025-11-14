@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import ast
 import json
 import queue
@@ -308,7 +306,7 @@ class MessageQueueManager(metaclass=SingletonClass):
         self.init_config()
 
         self.queue: queue.Queue[Any] = queue.Queue()
-        self.send_callback = send_callback
+        self.send_callback: Callable | None = send_callback
         self.check_interval: int = check_interval
 
         self._running = True
@@ -508,7 +506,8 @@ class MessageHelper(metaclass=Singleton):
                     )
                 )
             elif hasattr(message, "to_dict"):
-                # Non-system complex structure notification, such as media info/torrent list, etc.
+                # Non-system complex structure notification, such as media
+                # info/torrent list, etc.
                 content = message.to_dict()
                 content["title"] = title
                 content["date"] = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

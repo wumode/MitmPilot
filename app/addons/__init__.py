@@ -242,7 +242,7 @@ class _AddonBase(metaclass=ABCMeta):
             )
         )
 
-    def async_post_message(
+    async def async_post_message(
         self,
         channel: MessageChannel | None = None,
         mtype: NotificationType | None = None,
@@ -259,7 +259,7 @@ class _AddonBase(metaclass=ABCMeta):
             link = settings.MP_DOMAIN(
                 f"#/addons?tab=installed&id={self.__class__.__name__}"
             )
-        self.chain.async_post_message(
+        await self.chain.async_post_message(
             Notification(
                 channel=channel,
                 mtype=mtype,

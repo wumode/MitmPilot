@@ -644,11 +644,12 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "pyotp" },
+    { name = "pytelegrambotapi" },
     { name = "python-jose", extra = ["pycryptodome"] },
     { name = "python-multipart" },
     { name = "pyyaml" },
     { name = "redis" },
-    { name = "requests" },
+    { name = "requests", extra = ["socks"] },
     { name = "setproctitle" },
     { name = "sqlalchemy" },
     { name = "uv" },
@@ -686,11 +687,12 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
     { name = "pyotp", specifier = ">=2.9.0" },
+    { name = "pytelegrambotapi", specifier = ">=4.29.1" },
     { name = "python-jose", extras = ["pycryptodome"], specifier = ">=3.3.0" },
     { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "redis", specifier = ">=6.4.0" },
-    { name = "requests", specifier = ">=2.32.5" },
+    { name = "requests", extras = ["socks"], specifier = ">=2.32.5" },
     { name = "setproctitle", specifier = ">=1.3.7" },
     { name = "sqlalchemy", specifier = ">=2.0.44" },
     { name = "uv", specifier = ">=0.9.4" },
@@ -1077,6 +1079,27 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/30/23/2f0a3efc4d6a32f3b63cdff36cd398d9701d26cda58e3ab97ac79fb5e60d/pyperclip-1.9.0.tar.gz", hash = "sha256:b7de0142ddc81bfc5c7507eea19da920b92252b548b96186caf94a5e2527d310", size = 20961, upload-time = "2024-06-18T20:38:48.401Z" }
 
 [[package]]
+name = "pysocks"
+version = "1.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/11/293dd436aea955d45fc4e8a35b6ae7270f5b8e00b53cf6c024c83b657a11/PySocks-1.7.1.tar.gz", hash = "sha256:3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0", size = 284429, upload-time = "2019-09-20T02:07:35.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8d/59/b4572118e098ac8e46e399a1dd0f2d85403ce8bbaad9ec79373ed6badaf9/PySocks-1.7.1-py3-none-any.whl", hash = "sha256:2725bd0a9925919b9b51739eea5f9e2bae91e83288108a9ad338b2e3a4435ee5", size = 16725, upload-time = "2019-09-20T02:06:22.938Z" },
+]
+
+[[package]]
+name = "pytelegrambotapi"
+version = "4.29.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3a/24/81861e94c8ffb21eb83af018789d8fac5ff259f45313b24cdfc4b222c178/pytelegrambotapi-4.29.1.tar.gz", hash = "sha256:dd33d526e537eccb464175dd0326781a1c9fdb87db3ac141ec911e797f7e0797", size = 1363722, upload-time = "2025-09-03T14:59:46.367Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/d5/fe2cf6873fee400eb24cd244b6c33eda724dfdcea3835cff0de97b018557/pytelegrambotapi-4.29.1-py3-none-any.whl", hash = "sha256:961cd699c84864d29a3528eccd5319a558068a935a32b7c953c3b780b38f0d93", size = 294790, upload-time = "2025-09-03T14:59:44.418Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1234,6 +1257,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c9/74/b3ff8e6c8446842c3f5c837e9c3dfcfe2018ea6ecef224c710c85ef728f4/requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf", size = 134517, upload-time = "2025-08-18T20:46:02.573Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/db/4254e3eabe8020b458f1a747140d32277ec7a271daf1d235b70dc0b4e6e3/requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6", size = 64738, upload-time = "2025-08-18T20:46:00.542Z" },
+]
+
+[package.optional-dependencies]
+socks = [
+    { name = "pysocks" },
 ]
 
 [[package]]
