@@ -4,9 +4,7 @@ import weakref
 
 
 class Singleton(abc.ABCMeta, type):
-    """
-    类单例模式（按参数）
-    """
+    """Class Singleton Pattern (by parameters)"""
 
     _instances: dict = {}
 
@@ -18,17 +16,13 @@ class Singleton(abc.ABCMeta, type):
 
 
 class AbstractSingleton(abc.ABC, metaclass=Singleton):
-    """
-    抽像类单例模式
-    """
+    """Abstract Class Singleton Pattern."""
 
     pass
 
 
 class SingletonClass(abc.ABCMeta, type):
-    """
-    类单例模式（按类）
-    """
+    """Class Singleton Pattern (by class)"""
 
     _instances: dict = {}
 
@@ -39,16 +33,15 @@ class SingletonClass(abc.ABCMeta, type):
 
 
 class AbstractSingletonClass(abc.ABC, metaclass=SingletonClass):
-    """
-    抽像类单例模式（按类）
-    """
+    """Abstract Class Singleton Pattern (by class)"""
 
     pass
 
 
 class WeakSingleton(abc.ABCMeta, type):
     """
-    弱引用单例模式 - 当没有强引用时自动清理
+    Weak Reference Singleton Pattern - automatically cleans up when there are no strong
+    references.
     """
 
     _instances: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()

@@ -1,5 +1,6 @@
 import datetime
 import random
+from string.templatelib import Template
 
 
 class TimerUtils:
@@ -11,34 +12,34 @@ class TimerUtils:
         min_interval: int = 20,
         max_interval: int = 40,
     ) -> list[datetime.datetime]:
-        """按执行次数生成随机定时器.
+        """Generates random timers based on the number of executions.
 
-        :param num_executions: 执行次数
-        :param begin_hour: 开始时间
-        :param end_hour: 结束时间
-        :param min_interval: 最小间隔分钟
-        :param max_interval: 最大间隔分钟
+        :param num_executions: Number of executions
+        :param begin_hour: Start hour
+        :param end_hour: End hour
+        :param min_interval: Minimum interval in minutes
+        :param max_interval: Maximum interval in minutes
         """
         trigger: list = []
-        # 当前时间
+        # Current time
         now = datetime.datetime.now()
-        # 创建随机的时间触发器
+        # Create a random time trigger
         random_trigger = now.replace(hour=begin_hour, minute=0, second=0, microsecond=0)
         for _ in range(num_executions):
-            # 随机生成下一个任务的时间间隔
+            # Randomly generate the time interval for the next task
             interval_minutes = random.randint(min_interval, max_interval)
             random_interval = datetime.timedelta(minutes=interval_minutes)
-            # 记录上一个任务的时间触发器
+            # Record the time trigger of the previous task
             last_random_trigger = random_trigger
-            # 更新当前时间为下一个任务的时间触发器
+            # Update the current time to the time trigger of the next task
             random_trigger += random_interval
-            # 达到结束时间或者时间出现倒退时退出
+            # Exit when the end time is reached or time goes backward
             if (
                 random_trigger.hour > end_hour
                 or random_trigger.hour < last_random_trigger.hour
             ):
                 break
-            # 添加到队列
+            # Add to queue
             trigger.append(random_trigger)
 
         return trigger
@@ -47,10 +48,12 @@ class TimerUtils:
     def random_even_scheduler(
         num_executions: int = 1, begin_hour: int = 7, end_hour: int = 23
     ) -> list[datetime.datetime]:
-        """按执行次数尽可能平均生成随机定时器 :param num_executions: 执行次数 :param begin_hour:
+        """Generates random timers as evenly as possible based on the number of
+        executions.
 
-        计划范围开始的小时数
-        :param end_hour: 计划范围结束的小时数.
+        :param num_executions: Number of executions
+        :param begin_hour: Start hour of the planned range
+        :param end_hour: End hour of the planned range.
         """
         trigger_times = []
         start_time = datetime.datetime.now().replace(
@@ -60,13 +63,13 @@ class TimerUtils:
             hour=end_hour, minute=0, second=0, microsecond=0
         )
 
-        # 计算范围内的总分钟数
+        # Calculate total minutes within the range
         total_minutes = int((end_time - start_time).total_seconds() / 60)
-        # 计算每个执行时间段的平均长度
+        # Calculate the average length of each execution time segment
         segment_length = total_minutes // num_executions
 
         for i in range(num_executions):
-            # 在每个段内随机选择一个点
+            # Randomly select a point within each segment
             start_segment = segment_length * i
             end_segment = start_segment + segment_length
             minute = random.randint(start_segment, end_segment - 1)
@@ -77,7 +80,12 @@ class TimerUtils:
 
     @staticmethod
     def time_difference(input_datetime: datetime.datetime) -> str:
-        """判断输入时间与当前的时间差，如果输入时间大于当前时间则返回时间差，否则返回空字符串."""
+        """Calculates the time difference between the input time and the current time.
+
+        :return:
+            - The time difference if the input time is greater than the current time
+            - "", otherwise
+        """
         if not input_datetime:
             return ""
         current_datetime = datetime.datetime.now(datetime.UTC).astimezone()
@@ -104,7 +112,8 @@ class TimerUtils:
 
     @staticmethod
     def diff_minutes(input_datetime: datetime.datetime) -> int:
-        """计算当前时间与输入时间的分钟差."""
+        """Calculates the minute difference between the current time and the input
+        time."""
         if not input_datetime:
             return 0
         time_difference = datetime.datetime.now() - input_datetime

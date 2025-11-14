@@ -16,11 +16,11 @@ urllib3.disable_warnings(InsecureRequestWarning)
 
 
 def cookie_parse(cookies_str: str, array: bool = False) -> list | dict:
-    """解析cookie，转化为字典或者数组.
+    """Parses a cookie string into a dictionary or a list of dictionaries.
 
-    :param cookies_str: cookie字符串
-    :param array: 是否转化为数组
-    :return: 字典或者数组
+    :param cookies_str: The cookie string
+    :param array: Whether to convert to a list of dictionaries
+    :return: A dictionary or a list of dictionaries
     """
     if not cookies_str:
         return {}
@@ -36,8 +36,8 @@ def cookie_parse(cookies_str: str, array: bool = False) -> list | dict:
 
 
 def get_caller():
-    """获取调用者的名称，识别是否为插件调用."""
-    # 调用者名称
+    """Gets the name of the caller to identify if it's a plugin call."""
+    # Caller name
     caller_name = None
 
     try:
@@ -71,7 +71,8 @@ def get_caller():
 
 
 class RequestUtils:
-    """HTTP请求工具类，提供同步HTTP请求的基本功能."""
+    """HTTP request utility class, providing basic synchronous HTTP request
+    functions."""
 
     def __init__(
         self,
@@ -86,15 +87,15 @@ class RequestUtils:
         accept_type: str = None,
     ):
         """
-        :param headers: 请求头部信息
-        :param ua: User-Agent字符串
-        :param cookies: Cookie字符串或字典
-        :param proxies: 代理设置
-        :param session: requests.Session实例，如果为None则创建新的Session
-        :param timeout: 请求超时时间，默认为20秒
-        :param referer: Referer头部信息
-        :param content_type: 请求的Content-Type，默认为 "application/x-www-form-urlencoded; charset=UTF-8"
-        :param accept_type: Accept头部信息，默认为 "application/json"
+        :param headers: Request headers
+        :param ua: User-Agent string
+        :param cookies: Cookie string or dictionary
+        :param proxies: Proxy settings
+        :param session: requests.Session instance, if None, a new Session will be created
+        :param timeout: Request timeout in seconds, defaults to 20 seconds
+        :param referer: Referer header information
+        :param content_type: Request Content-Type, defaults to "application/x-www-form-urlencoded; charset=UTF-8"
+        :param accept_type: Accept header information, defaults to "application/json"
         """
         self._proxies = proxies
         self._session = session
@@ -124,11 +125,12 @@ class RequestUtils:
 
     @contextmanager
     def response_manager(self, method: str, url: str, **kwargs):
-        """响应管理器上下文管理器，确保响应对象被正确关闭.
+        """Response manager context manager, ensuring the response object is properly
+        closed.
 
-        :param method: HTTP方法
-        :param url: 请求的URL
-        :param kwargs: 其他请求参数.
+        :param method: HTTP method
+        :param url: Request URL
+        :param kwargs: Other request parameters.
         """
         response = None
         try:
@@ -144,14 +146,15 @@ class RequestUtils:
     def request(
         self, method: str, url: str, raise_exception: bool = False, **kwargs
     ) -> Response | None:
-        """发起HTTP请求.
+        """Initiates an HTTP request.
 
-        :param method: HTTP方法，如 get, post, put 等
-        :param url: 请求的URL
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象
-        :raises: requests.exceptions.RequestException 仅raise_exception为True时会抛出.
+        :param method: HTTP method, such as get, post, put, etc.
+        :param url: Request URL
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object
+        :raises: requests.exceptions.RequestException only if raise_exception is True.
         """
         if self._session is None:
             req_method = requests.request
@@ -166,24 +169,24 @@ class RequestUtils:
         try:
             return req_method(method, url, **kwargs)
         except requests.exceptions.RequestException as e:
-            # 获取更详细的错误信息
+            # Get more detailed error information
             error_msg = (
                 str(e)
                 if str(e)
-                else f"未知网络错误 (URL: {url}, Method: {method.upper()})"
+                else f"Unknown network error (URL: {url}, Method: {method.upper()})"
             )
-            logger.debug(f"请求失败: {error_msg}")
+            logger.debug(f"Request failed: {error_msg}")
             if raise_exception:
                 raise
             return None
 
     def get(self, url: str, params: dict = None, **kwargs) -> str | None:
-        """发送GET请求.
+        """Sends a GET request.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: 响应的内容，若发生RequestException则返回None.
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: Response content, or None if a RequestException occurs.
         """
         response = self.request(method="get", url=url, params=params, **kwargs)
         if response:
@@ -200,23 +203,23 @@ class RequestUtils:
     def post(
         self, url: str, data: Any = None, json: dict = None, **kwargs
     ) -> Response | None:
-        """发送POST请求.
+        """Sends a POST request.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestException则返回None.
+        :param url: Request URL
+        :param data: Request data
+        :param json: Request JSON data
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs.
         """
         return self.request(method="post", url=url, data=data, json=json, **kwargs)
 
     def put(self, url: str, data: Any = None, **kwargs) -> Response | None:
-        """发送PUT请求.
+        """Sends a PUT request.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param kwargs: 其他请求参数，如 headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestException则返回None.
+        :param url: Request URL
+        :param data: Request data
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs.
         """
         return self.request(method="put", url=url, data=data, **kwargs)
 
@@ -230,17 +233,18 @@ class RequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> Response | None:
-        """发送GET请求并返回响应对象.
+        """Sends a GET request and returns the response object.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param allow_redirects: 是否允许重定向
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestException则返回None
-        :raises: requests.exceptions.RequestException 仅raise_exception为True时会抛出.
+        :param url: Request URL
+        :param params: Request parameters
+        :param data: Request data
+        :param json: Request JSON data
+        :param allow_redirects: Whether to allow redirects
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs
+        :raises: requests.exceptions.RequestException only if raise_exception is True.
         """
         return self.request(
             method="get",
@@ -255,11 +259,12 @@ class RequestUtils:
 
     @contextmanager
     def get_stream(self, url: str, params: dict = None, **kwargs):
-        """获取流式响应的上下文管理器，适用于大文件下载.
+        """Context manager for obtaining a streaming response, suitable for large file
+        downloads.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters
         """
         kwargs["stream"] = True
         response = self.request(method="get", url=url, params=params, **kwargs)
@@ -280,18 +285,19 @@ class RequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> Response | None:
-        """发送POST请求并返回响应对象.
+        """Sends a POST request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param files: 请求的文件
-        :param json: 请求的JSON数据
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestException则返回None
-        :raises: requests.exceptions.RequestException 仅 raise_exception 为True时会抛出.
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param files: Request files
+        :param json: Request JSON data
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs
+        :raises: requests.exceptions.RequestException only if raise_exception is True.
         """
         return self.request(
             method="post",
@@ -316,18 +322,19 @@ class RequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> Response | None:
-        """发送PUT请求并返回响应对象.
+        """Sends a PUT request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param files: 请求的文件
-        :param json: 请求的JSON数据
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies 等
-        :return: HTTP响应对象，若发生 RequestException 则返回 None
-        :raises: requests.exceptions.RequestException 仅 raise_exception 为True时会抛出.
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param files: Request files
+        :param json: Request JSON data
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs
+        :raises: requests.exceptions.RequestException only if raise_exception is True.
         """
         return self.request(
             method="put",
@@ -350,16 +357,17 @@ class RequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> Response | None:
-        """发送DELETE请求并返回响应对象.
+        """Sends a DELETE request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生 RequestException 则返回None
-        :raises: requests.exceptions.RequestException 仅 raise_exception 为True时会抛出.
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestException occurs
+        :raises: requests.exceptions.RequestException only if raise_exception is True.
         """
         return self.request(
             method="delete",
@@ -372,12 +380,13 @@ class RequestUtils:
         )
 
     def get_json(self, url: str, params: dict = None, **kwargs) -> dict | None:
-        """发送GET请求并返回JSON数据，自动关闭连接.
+        """Sends a GET request and returns JSON data, automatically closing the
+        connection.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数
-        :return: JSON数据，若发生异常则返回None.
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters
+        :return: JSON data, or None if an exception occurs.
         """
         response = self.request(method="get", url=url, params=params, **kwargs)
         if response:
@@ -394,13 +403,14 @@ class RequestUtils:
     def post_json(
         self, url: str, data: Any = None, json: dict = None, **kwargs
     ) -> dict | None:
-        """发送POST请求并返回JSON数据，自动关闭连接.
+        """Sends a POST request and returns JSON data, automatically closing the
+        connection.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param kwargs: 其他请求参数
-        :return: JSON数据，若发生异常则返回None.
+        :param url: Request URL
+        :param data: Request data
+        :param json: Request JSON data
+        :param kwargs: Other request parameters
+        :return: JSON data, or None if an exception occurs.
         """
         if json is None:
             json = {}
@@ -418,10 +428,10 @@ class RequestUtils:
 
     @staticmethod
     def parse_cache_control(header: str) -> tuple[str, int | None]:
-        """解析 Cache-Control 头，返回 cache_directive 和 max_age.
+        """Parses the Cache-Control header, returning the cache_directive and max_age.
 
-        :param header: Cache-Control 头部的字符串
-        :return: cache_directive 和 max_age
+        :param header: The Cache-Control header string
+        :return: cache_directive and max_age
         """
         cache_directive = ""
         max_age = None
@@ -455,12 +465,14 @@ class RequestUtils:
         cache_control: str | None = "public",
         max_age: int | None = 86400,
     ) -> dict:
-        """生成 HTTP 响应的 ETag 和 Cache-Control 头.
+        """Generates ETag and Cache-Control headers for HTTP responses.
 
-        :param etag: 响应的 ETag 值。如果为 None，则不添加 ETag 头部。
-        :param cache_control: Cache-Control 指令，例如 "public"、"private" 等。默认为 "public"
-        :param max_age: Cache-Control 的 max-age 值（秒）。默认为 86400 秒（1天）
-        :return: HTTP 头部的字典
+        :param etag: The ETag value for the response. If None, no ETag header is added.
+        :param cache_control: Cache-Control directive, e.g., "public", "private", etc.
+            Defaults to "public"
+        :param max_age: Cache-Control max-age value (seconds). Defaults to 86400 seconds
+            (1 day)
+        :return: Dictionary of HTTP headers
         """
         cache_headers = {}
 
@@ -478,7 +490,8 @@ class RequestUtils:
 
 
 class AsyncRequestUtils:
-    """异步HTTP请求工具类，提供异步HTTP请求的基本功能."""
+    """Asynchronous HTTP request utility class, providing basic asynchronous HTTP
+    request functions."""
 
     def __init__(
         self,
@@ -493,15 +506,15 @@ class AsyncRequestUtils:
         accept_type: str | None = None,
     ):
         """
-        :param headers: 请求头部信息
-        :param ua: User-Agent字符串
-        :param cookies: Cookie字符串或字典
-        :param proxies: 代理设置
-        :param client: httpx.AsyncClient实例，如果为None则创建新的客户端
-        :param timeout: 请求超时时间，默认为20秒
-        :param referer: Referer头部信息
-        :param content_type: 请求的Content-Type，默认为 "application/x-www-form-urlencoded; charset=UTF-8"
-        :param accept_type: Accept头部信息，默认为 "application/json"
+        :param headers: Request headers
+        :param ua: User-Agent string
+        :param cookies: Cookie string or dictionary
+        :param proxies: Proxy settings
+        :param client: httpx.AsyncClient instance, if None, a new client will be created
+        :param timeout: Request timeout in seconds, defaults to 20 seconds
+        :param referer: Referer header information
+        :param content_type: Request Content-Type, defaults to "application/x-www-form-urlencoded; charset=UTF-8"
+        :param accept_type: Accept header information, defaults to "application/json"
         """
         self._proxies = self._convert_proxies_for_httpx(proxies)
         self._client = client
@@ -535,11 +548,11 @@ class AsyncRequestUtils:
 
     @staticmethod
     def _convert_proxies_for_httpx(proxies: dict | None) -> str | None:
-        """将requests格式的代理配置转换为httpx兼容的格式.
+        """Converts requests-style proxy configuration to httpx-compatible format.
 
-        :param proxies: requests格式的代理配置 {"http": "http://proxy:port", "https":
-            "http://proxy:port"}
-        :return: httpx兼容的代理字符串或None
+        :param proxies: requests-style proxy configuration {"http": "http://proxy:port",
+            "https": "http://proxy:port"}
+        :return: httpx-compatible proxy string or None
         """
         if not proxies:
             return None
@@ -559,11 +572,12 @@ class AsyncRequestUtils:
 
     @asynccontextmanager
     async def response_manager(self, method: str, url: str, **kwargs):
-        """异步响应管理器上下文管理器，确保响应对象被正确关闭.
+        """Asynchronous response manager context manager, ensuring the response object
+        is properly closed.
 
-        :param method: HTTP方法
-        :param url: 请求的URL
-        :param kwargs: 其他请求参数
+        :param method: HTTP method
+        :param url: Request URL
+        :param kwargs: Other request parameters
         """
         response = None
         try:
@@ -579,17 +593,18 @@ class AsyncRequestUtils:
     async def request(
         self, method: str, url: str, raise_exception: bool = False, **kwargs
     ) -> httpx.Response | None:
-        """发起异步HTTP请求.
+        """Initiates an asynchronous HTTP request.
 
-        :param method: HTTP方法，如 get, post, put 等
-        :param url: 请求的URL
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象
-        :raises: httpx.RequestError 仅raise_exception为True时会抛出
+        :param method: HTTP method, such as get, post, put, etc.
+        :param url: Request URL
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object
+        :raises: httpx.RequestError only if raise_exception is True
         """
         if self._client is None:
-            # 创建临时客户端
+            # Create a temporary client
             async with httpx.AsyncClient(
                 proxy=self._proxies,
                 timeout=self._timeout,
@@ -631,12 +646,12 @@ class AsyncRequestUtils:
             return None
 
     async def get(self, url: str, params: dict = None, **kwargs) -> str | None:
-        """发送异步GET请求.
+        """Sends an asynchronous GET request.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: 响应的内容，若发生RequestError则返回None
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: Response content, or None if a RequestError occurs
         """
         response = await self.request(method="get", url=url, params=params, **kwargs)
         if response:
@@ -653,25 +668,25 @@ class AsyncRequestUtils:
     async def post(
         self, url: str, data: Any = None, json: dict = None, **kwargs
     ) -> httpx.Response | None:
-        """发送异步POST请求.
+        """Sends an asynchronous POST request.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
+        :param url: Request URL
+        :param data: Request data
+        :param json: Request JSON data
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
         """
         return await self.request(
             method="post", url=url, data=data, json=json, **kwargs
         )
 
     async def put(self, url: str, data: Any = None, **kwargs) -> httpx.Response | None:
-        """发送异步PUT请求.
+        """Sends an asynchronous PUT request.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
+        :param url: Request URL
+        :param data: Request data
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
         """
         return await self.request(method="put", url=url, data=data, **kwargs)
 
@@ -685,17 +700,18 @@ class AsyncRequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> httpx.Response | None:
-        """发送异步GET请求并返回响应对象.
+        """Sends an asynchronous GET request and returns the response object.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param allow_redirects: 是否允许重定向
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
-        :raises: httpx.RequestError 仅raise_exception为True时会抛出.
+        :param url: Request URL
+        :param params: Request parameters
+        :param data: Request data
+        :param json: Request JSON data
+        :param allow_redirects: Whether to allow redirects
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
+        :raises: httpx.RequestError only if raise_exception is True.
         """
         return await self.request(
             method="get",
@@ -710,11 +726,12 @@ class AsyncRequestUtils:
 
     @asynccontextmanager
     async def get_stream(self, url: str, params: dict = None, **kwargs):
-        """获取异步流式响应的上下文管理器，适用于大文件下载.
+        """Context manager for obtaining an asynchronous streaming response, suitable
+        for large file downloads.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters
         """
         kwargs["stream"] = True
         response = await self.request(method="get", url=url, params=params, **kwargs)
@@ -735,18 +752,19 @@ class AsyncRequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> httpx.Response | None:
-        """发送异步POST请求并返回响应对象.
+        """Sends an asynchronous POST request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param files: 请求的文件
-        :param json: 请求的JSON数据
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
-        :raises: httpx.RequestError 仅raise_exception为True时会抛出
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param files: Request files
+        :param json: Request JSON data
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
+        :raises: httpx.RequestError only if raise_exception is True
         """
         return await self.request(
             method="post",
@@ -771,18 +789,19 @@ class AsyncRequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> httpx.Response | None:
-        """发送异步PUT请求并返回响应对象.
+        """Sends an asynchronous PUT request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param files: 请求的文件
-        :param json: 请求的JSON数据
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
-        :raises: httpx.RequestError 仅raise_exception为True时会抛出.
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param files: Request files
+        :param json: Request JSON data
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
+        :raises: httpx.RequestError only if raise_exception is True.
         """
         return await self.request(
             method="put",
@@ -805,16 +824,17 @@ class AsyncRequestUtils:
         raise_exception: bool = False,
         **kwargs,
     ) -> httpx.Response | None:
-        """发送异步DELETE请求并返回响应对象.
+        """Sends an asynchronous DELETE request and returns the response object.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param params: 请求的参数
-        :param allow_redirects: 是否允许重定向
-        :param raise_exception: 是否在发生异常时抛出异常，否则默认拦截异常返回None
-        :param kwargs: 其他请求参数，如headers, cookies, proxies等
-        :return: HTTP响应对象，若发生RequestError则返回None
-        :raises: httpx.RequestError 仅raise_exception为True时会抛出.
+        :param url: Request URL
+        :param data: Request data
+        :param params: Request parameters
+        :param allow_redirects: Whether to allow redirects
+        :param raise_exception: Whether to raise an exception if one occurs, otherwise
+            exceptions are caught and None is returned by default
+        :param kwargs: Other request parameters, such as headers, cookies, proxies, etc.
+        :return: HTTP response object, or None if a RequestError occurs
+        :raises: httpx.RequestError only if raise_exception is True.
         """
         return await self.request(
             method="delete",
@@ -827,12 +847,13 @@ class AsyncRequestUtils:
         )
 
     async def get_json(self, url: str, params: dict = None, **kwargs) -> dict | None:
-        """发送异步GET请求并返回JSON数据，自动关闭连接.
+        """Sends an asynchronous GET request and returns JSON data, automatically
+        closing the connection.
 
-        :param url: 请求的URL
-        :param params: 请求的参数
-        :param kwargs: 其他请求参数
-        :return: JSON数据，若发生异常则返回None
+        :param url: Request URL
+        :param params: Request parameters
+        :param kwargs: Other request parameters
+        :return: JSON data, or None if an exception occurs
         """
         response = await self.request(method="get", url=url, params=params, **kwargs)
         if response:
@@ -849,13 +870,14 @@ class AsyncRequestUtils:
     async def post_json(
         self, url: str, data: Any = None, json: dict = None, **kwargs
     ) -> dict | None:
-        """发送异步POST请求并返回JSON数据，自动关闭连接.
+        """Sends an asynchronous POST request and returns JSON data, automatically
+        closing the connection.
 
-        :param url: 请求的URL
-        :param data: 请求的数据
-        :param json: 请求的JSON数据
-        :param kwargs: 其他请求参数
-        :return: JSON数据，若发生异常则返回None.
+        :param url: Request URL
+        :param data: Request data
+        :param json: Request JSON data
+        :param kwargs: Other request parameters
+        :return: JSON data, or None if an exception occurs.
         """
         if json is None:
             json = {}

@@ -13,11 +13,11 @@ def retry(
     logger: Any = None,
 ):
     """
-    :param exception_to_check: 需要捕获的异常
-    :param tries: 重试次数
-    :param delay: 延迟时间
-    :param backoff: 延迟倍数
-    :param logger: 日志对象
+    :param exception_to_check: The exception to catch
+    :param tries: Number of retries
+    :param delay: Delay time
+    :param backoff: Delay multiplier
+    :param logger: Logger object
     """
 
     def deco_retry(f):
@@ -29,7 +29,7 @@ def retry(
                 except ImmediateException:
                     raise
                 except exception_to_check as e:
-                    msg = f"{str(e)}, {mdelay} 秒后重试 ..."
+                    msg = f"{str(e)}, retrying in {mdelay} seconds..."
                     if logger:
                         logger.warn(msg)
                     else:
@@ -47,7 +47,7 @@ def retry(
                 except ImmediateException:
                     raise
                 except exception_to_check as e:
-                    msg = f"{str(e)}, {mdelay} 秒后重试 ..."
+                    msg = f"{str(e)}, retrying in {mdelay} seconds..."
                     if logger:
                         logger.warn(msg)
                     else:
@@ -57,7 +57,7 @@ def retry(
                     mdelay *= backoff
             return await f(*args, **kwargs)
 
-        # 根据函数类型返回相应的包装器
+        # Returns the appropriate wrapper based on the function type.
         if inspect.iscoroutinefunction(f):
             return async_f_retry
         else:

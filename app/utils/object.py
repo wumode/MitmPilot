@@ -34,9 +34,7 @@ class ObjectUtils:
 
     @staticmethod
     def arguments(func: Callable[..., Any]) -> int:
-        """
-        返回函数的参数个数
-        """
+        """Returns the number of arguments of the function."""
         signature = inspect.signature(func)
         parameters = signature.parameters
 
@@ -44,31 +42,29 @@ class ObjectUtils:
 
     @staticmethod
     def check_method(func: Callable[..., Any]) -> bool:
-        """
-        检查函数是否已实现
-        """
+        """Checks if the function is implemented."""
         try:
             src = inspect.getsource(func)
             tree = ast.parse(textwrap.dedent(src))
             node = tree.body[0]
-            # 不是普通函数定义（例如 lambda、内建函数或解析失败）
-            # 默认认为函数已实现
+            # Not a regular function definition (e.g., lambda, built-in function, or parsing failed)
+            # Assume the function is implemented by default
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 return True
             body = node.body
 
             for stmt in body:
-                # 跳过 pass
+                # Skip pass
                 if isinstance(stmt, ast.Pass):
                     continue
-                # 跳过 docstring 或 ...
+                # Skip docstring or ...
                 if isinstance(stmt, ast.Expr):
                     expr = stmt.value
                     if isinstance(expr, ast.Constant) and isinstance(expr.value, str):
                         continue
                     if isinstance(expr, ast.Constant) and expr.value is Ellipsis:
                         continue
-                # 检查 raise NotImplementedError
+                # Check for raise NotImplementedError
                 if isinstance(stmt, ast.Raise):
                     exc = stmt.exc
                     if (
@@ -82,7 +78,7 @@ class ObjectUtils:
             return False
         except Exception as err:
             print(err)
-            # 源代码分析失败时，进行字节码分析
+            # If source code analysis fails, perform bytecode analysis
 
             # For methods, get the underlying function
             if hasattr(func, "__func__"):
@@ -95,11 +91,11 @@ class ObjectUtils:
 
             code_obj = func.__code__
             instructions = list(dis.get_instructions(code_obj))
-            # 检查是否为仅返回None的简单结构
+            # Check if it's a simple structure that only returns None
             if len(instructions) == 2:
                 first, second = instructions
                 if first.opname == "LOAD_CONST" and second.opname == "RETURN_VALUE":
-                    # 验证加载的常量是否为None
+                    # Verify if the loaded constant is None
                     const_index = first.arg
                     if const_index is None:
                         return False
@@ -107,17 +103,15 @@ class ObjectUtils:
                         const_index < len(code_obj.co_consts)
                         and code_obj.co_consts[const_index] is None
                     ):
-                        # 未实现的空函数
+                        # Unimplemented empty function
                         return False
-            # 其他情况认为已实现
+            # Otherwise, assume it's implemented
             return True
 
     @staticmethod
     def check_signature(func: FunctionType, *args) -> bool:
-        """
-        检查输出与函数的参数类型是否一致
-        """
-        # 获取函数的参数信息
+        """Checks if the output matches the function's argument types."""
+        # Get function parameter information
         signature = inspect.signature(func)
         parameters = signature.parameters
         if len(args) != len(parameters):
@@ -128,16 +122,16 @@ class ObjectUtils:
         except TypeError:
             type_hints = {}
         for arg, (param_name, param) in zip(args, parameters.items(), strict=False):
-            # 优先使用解析后的类型提示
+            # Prefer parsed type hints
             param_type = type_hints.get(param_name, None)
             if param_type is None:
-                # 处理原始注解（可能为字符串或Cython类型）
+                # Handle raw annotations (possibly string or Cython types)
                 param_annotation = param.annotation
                 if param_annotation is inspect.Parameter.empty:
                     continue
-                # 处理字符串类型的注解
+                # Handle string type annotations
                 if isinstance(param_annotation, str):
-                    # 尝试解析字符串为实际类型
+                    # Attempt to parse string as actual type
                     module = inspect.getmodule(func)
                     global_vars = module.__dict__ if module else globals()
                     try:

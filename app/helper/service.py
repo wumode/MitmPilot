@@ -10,48 +10,42 @@ TConf = TypeVar("TConf")
 
 
 class ServiceConfigHelper:
-    """
-    配置帮助类，获取不同类型的服务配置
-    """
+    """Configuration helper class for retrieving different types of service
+    configurations."""
 
     @staticmethod
     def get_configs(config_key: SystemConfigKey, conf_type: type) -> list:
-        """
-        通用获取配置的方法，根据 config_key 获取相应的配置并返回指定类型的配置列表
+        """Generic method to retrieve configurations, gets configurations based on
+        config_key and returns a list of specified type.
 
-        :param config_key: 系统配置的 key
-        :param conf_type: 用于实例化配置对象的类类型
-        :return: 配置对象列表
+        :param config_key: The key for the system configuration
+        :param conf_type: The class type used to instantiate the configuration object
+        :return: A list of configuration objects
         """
         config_data = SystemConfigOper().get(config_key)
         if not config_data:
             return []
-        # 直接使用 conf_type 来实例化配置对象
+        # Directly use conf_type to instantiate configuration objects
         return [conf_type(**conf) for conf in config_data]
 
     @staticmethod
     def get_notification_configs() -> list[NotificationConf]:
-        """
-        获取消息通知渠道的配置
-        """
+        """Retrieves the configuration for message notification channels."""
         return ServiceConfigHelper.get_configs(
             SystemConfigKey.Notifications, NotificationConf
         )
 
     @staticmethod
     def get_notification_switches() -> list[NotificationSwitchConf]:
-        """
-        获取消息通知场景的开关
-        """
+        """Retrieves the switches for message notification scenarios."""
         return ServiceConfigHelper.get_configs(
             SystemConfigKey.NotificationSwitchs, NotificationSwitchConf
         )
 
     @staticmethod
     def get_notification_switch(mtype: NotificationType) -> str | None:
-        """
-        获取指定类型的消息通知场景的开关
-        """
+        """Retrieves the switch for a specified type of message notification
+        scenario."""
         switchs = ServiceConfigHelper.get_notification_switches()
         for switch in switchs:
             if switch.type == mtype.value:
@@ -60,9 +54,8 @@ class ServiceConfigHelper:
 
 
 class ServiceBaseHelper[TConf]:
-    """
-    通用服务帮助类，抽象获取配置和服务实例的通用逻辑
-    """
+    """Generic service helper class, abstracting common logic for retrieving
+    configurations and service instances."""
 
     def __init__(
         self,
@@ -76,11 +69,11 @@ class ServiceBaseHelper[TConf]:
         self.module_type = module_type
 
     def get_configs(self, include_disabled: bool = False) -> dict[str, TConf]:
-        """
-        获取配置列表
+        """Retrieves the list of configurations.
 
-        :param include_disabled: 是否包含禁用的配置，默认 False（仅返回启用的配置）
-        :return: 配置字典
+        :param include_disabled: Whether to include disabled configurations, defaults to
+            False (only enabled configurations are returned)
+        :return: Dictionary of configurations
         """
         configs: list[TConf] = ServiceConfigHelper.get_configs(
             self.config_key, self.conf_type
@@ -96,18 +89,15 @@ class ServiceBaseHelper[TConf]:
         )
 
     def get_config(self, name: str) -> TConf | None:
-        """
-        获取指定名称配置
-        """
+        """Retrieves the configuration with the specified name."""
         if not name:
             return None
         configs = self.get_configs()
         return configs.get(name)
 
     def iterate_module_instances(self) -> Iterator[ServiceInfo]:
-        """
-        迭代所有模块的实例及其对应的配置，返回 ServiceInfo 实例
-        """
+        """Iterates through instances of all modules and their corresponding
+        configurations, returning ServiceInfo instances."""
         configs = self.get_configs()
         for module in self.modulemanager.get_running_type_modules(self.module_type):
             if not module:
@@ -131,12 +121,11 @@ class ServiceBaseHelper[TConf]:
     def get_services(
         self, type_filter: str | None = None, name_filters: list[str] | None = None
     ) -> dict[str, ServiceInfo]:
-        """
-        获取服务信息列表，并根据类型和名称列表进行过滤
+        """Retrieves a list of service information, filtered by type and name list.
 
-        :param type_filter: 需要过滤的服务类型
-        :param name_filters: 需要过滤的服务名称列表
-        :return: 过滤后的服务信息字典
+        :param type_filter: The service type to filter by
+        :param name_filters: A list of service names to filter by
+        :return: A dictionary of filtered service information
         """
         name_filters_set = set(name_filters) if name_filters else None
 
@@ -151,12 +140,12 @@ class ServiceBaseHelper[TConf]:
     def get_service(
         self, name: str, type_filter: str | None = None
     ) -> ServiceInfo | None:
-        """
-        获取指定名称的服务信息，并根据类型过滤
+        """Retrieves service information for the specified name, filtered by type.
 
-        :param name: 服务名称
-        :param type_filter: 需要过滤的服务类型
-        :return: 对应的服务信息，若不存在或类型不匹配则返回 None
+        :param name: Service name
+        :param type_filter: The service type to filter by
+        :return: Corresponding service information, or None if not found or type does
+            not match
         """
         if not name:
             return None

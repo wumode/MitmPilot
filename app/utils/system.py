@@ -9,9 +9,7 @@ import psutil
 class SystemUtils:
     @staticmethod
     def get_config_path(config_dir: str | None = None) -> Path:
-        """
-        获取配置路径
-        """
+        """Gets the configuration path."""
         if not config_dir:
             config_dir = os.getenv("CONFIG_DIR")
         if config_dir:
@@ -21,58 +19,51 @@ class SystemUtils:
 
     @staticmethod
     def get_env_path() -> Path:
-        """
-        获取配置路径
-        """
+        """Gets the environment file path."""
         return SystemUtils.get_config_path() / "app.env"
 
     @staticmethod
     def execute_with_subprocess(pip_command: list) -> tuple[bool, str]:
-        """
-        执行命令并捕获标准输出和错误输出，记录日志。
+        """Executes a command, captures standard output and error output, and logs them.
 
-        :param pip_command: 要执行的命令，以列表形式提供
-        :return: (命令是否成功, 输出信息或错误信息)
+        :param pip_command: The command to execute, provided as a list
+        :return:
+            - if the command was successful
+            - information or error message
         """
         try:
-            # 使用 subprocess.run 捕获标准输出和标准错误
+            # Use subprocess.run to capture stdout and stderr
             result = subprocess.run(
                 pip_command,
                 check=True,
                 text=True,
                 capture_output=True,
             )
-            # 合并 stdout 和 stderr
+            # Merge stdout and stderr
             output = result.stdout + result.stderr
             return True, output
         except subprocess.CalledProcessError as e:
             error_message = (
-                f"命令：{' '.join(pip_command)}，执行失败，错误信息：{e.stderr.strip()}"
+                f"Command: {' '.join(pip_command)}, failed to execute, error message: {e.stderr.strip()}"
             )
             return False, error_message
         except Exception as e:
-            error_message = f"未知错误，命令：{' '.join(pip_command)}，错误：{str(e)}"
+            error_message = f"Unknown error, command: {' '.join(pip_command)}, error: {str(e)}"
             return False, error_message
 
     @staticmethod
     def is_macos() -> bool:
-        """
-        判断是否为MacOS系统
-        """
+        """Checks if the operating system is macOS."""
         return platform.system() == "Darwin"
 
     @staticmethod
     def is_aarch64() -> bool:
-        """
-        判断是否为ARM64架构
-        """
+        """Checks if the CPU architecture is ARM64."""
         return platform.machine().lower() in ("aarch64", "arm64")
 
     @staticmethod
     def is_aarch() -> bool:
-        """
-        判断是否为ARM32架构
-        """
+        """Checks if the CPU architecture is ARM32."""
         arch_name = platform.machine().lower()
         return arch_name.startswith(("arm", "aarch")) and arch_name not in (
             "aarch64",
@@ -81,23 +72,17 @@ class SystemUtils:
 
     @staticmethod
     def is_x86_64() -> bool:
-        """
-        判断是否为AMD64架构
-        """
+        """Checks if the CPU architecture is AMD64 (x86_64)"""
         return platform.machine().lower() in ("amd64", "x86_64")
 
     @staticmethod
     def is_x86_32() -> bool:
-        """
-        判断是否为AMD32架构
-        """
+        """Checks if the CPU architecture is AMD32 (x86_32)"""
         return platform.machine().lower() in ("i386", "i686", "x86", "386", "x86_32")
 
     @staticmethod
     def cpu_arch() -> str:
-        """
-        获取CPU架构
-        """
+        """Gets the CPU architecture."""
         if SystemUtils.is_x86_64():
             return "x86_64"
         elif SystemUtils.is_x86_32():
@@ -111,16 +96,12 @@ class SystemUtils:
 
     @staticmethod
     def cpu_usage() -> int:
-        """
-        获取CPU使用率
-        """
+        """Gets CPU usage percentage."""
         return int(psutil.cpu_percent())
 
     @staticmethod
     def memory_usage() -> list[int]:
-        """
-        获取当前程序的内存使用量和使用率
-        """
+        """Gets the current program's memory usage and percentage."""
         current_process = psutil.Process()
         process_memory = current_process.memory_info().rss
         system_memory = psutil.virtual_memory().total
@@ -129,18 +110,16 @@ class SystemUtils:
 
     @staticmethod
     def network_usage() -> list[int]:
-        """
-        获取当前网络流量（上行和下行流量，单位：bytes/s）
-        """
+        """Gets current network traffic (upload and download, in bytes/s)"""
         import time
 
-        # 获取初始网络统计
+        # Get initial network statistics
         net_io_1 = psutil.net_io_counters()
-        time.sleep(1)  # 等待1秒
-        # 获取1秒后的网络统计
+        time.sleep(1)  # Wait for 1 second
+        # Get network statistics after 1 second
         net_io_2 = psutil.net_io_counters()
 
-        # 计算1秒内的流量变化
+        # Calculate traffic change within 1 second
         upload_speed = net_io_2.bytes_sent - net_io_1.bytes_sent
         download_speed = net_io_2.bytes_recv - net_io_1.bytes_recv
 

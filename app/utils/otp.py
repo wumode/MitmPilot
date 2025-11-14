@@ -19,9 +19,7 @@ class OtpUtils:
 
     @staticmethod
     def is_legal(otp_uri: str, password: str) -> bool:
-        """
-        校验二次验证是否正确
-        """
+        """Checks if the two-factor authentication is correct."""
         try:
             return pyotp.TOTP(pyotp.parse_uri(otp_uri).secret).verify(password)
         except Exception as err:
@@ -30,9 +28,7 @@ class OtpUtils:
 
     @staticmethod
     def check(secret: str, password: str) -> bool:
-        """
-        校验二次验证是否正确
-        """
+        """Checks if the two-factor authentication is correct."""
         try:
             totp = pyotp.TOTP(secret)
             return totp.verify(password)
@@ -42,9 +38,7 @@ class OtpUtils:
 
     @staticmethod
     def get_secret(otp_uri: str) -> str:
-        """
-        获取uri中的secret
-        """
+        """Gets the secret from the URI."""
         try:
             return pyotp.parse_uri(otp_uri).secret
         except Exception as err:
