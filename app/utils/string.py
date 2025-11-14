@@ -299,9 +299,7 @@ class StringUtils:
         """
         if not name:
             return None
-        return re.sub(r"[*\\/\"<>~|]", "", name, flags=re.IGNORECASE).replace(
-            ":", "："
-        )
+        return re.sub(r"[*\\/\"<>~|]", "", name, flags=re.IGNORECASE).replace(":", "：")
 
     @staticmethod
     def generate_random_str(length: int = 16, secure: bool = False) -> str:
@@ -351,7 +349,11 @@ class StringUtils:
 
         try:
             parsed_date = dateparser.parse(datetime_str)
-            return parsed_date.strftime("%Y-%m-%d %H:%M:%S") if parsed_date else datetime_str
+            return (
+                parsed_date.strftime("%Y-%m-%d %H:%M:%S")
+                if parsed_date
+                else datetime_str
+            )
         except Exception as e:
             print(str(e))
             return datetime_str
@@ -473,7 +475,7 @@ class StringUtils:
         return chinese_count + english_count
 
     @staticmethod
-    def split_text(text: str, max_length: int) -> Generator[str, None, None]:
+    def split_text(text: str, max_length: int) -> Generator[str]:
         """Splits text into chunks of a maximum byte length, prioritizing splitting at
         newlines and avoiding splitting within words."""
         if not text:
@@ -707,7 +709,16 @@ class StringUtils:
             if not compare_type:
                 raise ValueError("Comparison type is missing")
             if compare_type not in {
-                "ge", "gt", "le", "lt", "eq", "==", ">=", ">", "<=", "<"
+                "ge",
+                "gt",
+                "le",
+                "lt",
+                "eq",
+                "==",
+                ">=",
+                ">",
+                "<=",
+                "<",
             }:
                 raise ValueError(f"Invalid comparison type: {compare_type}")
 

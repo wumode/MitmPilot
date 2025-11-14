@@ -138,8 +138,10 @@ class ExponentialBackoffRateLimiter(BaseRateLimiter):
             if current_time >= self.next_allowed_time:
                 return True, ""
             wait_time = self.next_allowed_time - current_time
-            message = (f"Rate limited, skipping call. Will be allowed to continue in "
-                       f"{wait_time:.2f} seconds")
+            message = (
+                f"Rate limited, skipping call. Will be allowed to continue in "
+                f"{wait_time:.2f} seconds"
+            )
             self.log_info(message)
             return False, self.format_log(message)
 
@@ -151,8 +153,10 @@ class ExponentialBackoffRateLimiter(BaseRateLimiter):
         """
         with self.lock:
             if self.next_allowed_time != 0 or self.current_wait > self.base_wait:
-                self.log_info(f"Call successful, resetting rate limit waiting time to "
-                              f"{self.base_wait} seconds")
+                self.log_info(
+                    f"Call successful, resetting rate limit waiting time to "
+                    f"{self.base_wait} seconds"
+                )
             self.next_allowed_time = 0.0
             self.current_wait = self.base_wait
 
@@ -169,8 +173,10 @@ class ExponentialBackoffRateLimiter(BaseRateLimiter):
                 self.current_wait * self.backoff_factor, self.max_wait
             )
             wait_time = self.next_allowed_time - current_time
-            self.log_warning(f"Rate limit triggered. Will be allowed to continue in "
-                             f"{wait_time:.2f} seconds")
+            self.log_warning(
+                f"Rate limit triggered. Will be allowed to continue in "
+                f"{wait_time:.2f} seconds"
+            )
 
 
 # Time window rate limiter
@@ -222,8 +228,10 @@ class WindowRateLimiter(BaseRateLimiter):
                 return True, ""
             else:
                 wait_time = self.window_seconds - (current_time - self.call_times[0])
-                message = (f"Rate limited, skipping call. Will be allowed to continue "
-                           f"in {wait_time:.2f} seconds")
+                message = (
+                    f"Rate limited, skipping call. Will be allowed to continue "
+                    f"in {wait_time:.2f} seconds"
+                )
                 self.log_info(message)
                 return False, self.format_log(message)
 

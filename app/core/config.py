@@ -14,6 +14,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from app.log import log_settings, logger
 from app.utils.system import SystemUtils
+from app.utils.url import UrlUtils
 from version import APP_VERSION
 
 
@@ -466,6 +467,11 @@ class Settings(BaseSettings, ConfigModel):
                 "User-Agent": self.NORMAL_USER_AGENT,
             }
         return {}
+
+    def MP_DOMAIN(self, url: str = None):
+        if not self.APP_DOMAIN:
+            return None
+        return UrlUtils.combine_url(host=self.APP_DOMAIN, path=url)
 
 
 settings = Settings()

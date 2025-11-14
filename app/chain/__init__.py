@@ -5,10 +5,9 @@ from typing import Any
 
 from fastapi.concurrency import run_in_threadpool
 
-from app.core.addon import AddonManager
 from app.core.config import settings
+from app.core.ctx import Context
 from app.core.event import EventManager
-from app.core.module import ModuleManager
 from app.db.message_oper import MessageOper
 from app.db.user_oper import UserOper
 from app.helper.message import MessageHelper, MessageQueueManager, MessageTemplateHelper
@@ -24,9 +23,7 @@ class ChainBase:
 
     def __init__(self):
         """Public initialization."""
-        self.modulemanager = ModuleManager()
         self.eventmanager = EventManager()
-        self.addonmanager = AddonManager()
         self.messagehelper = MessageHelper()
         self.messageoper = MessageOper()
         self.messagequeue = MessageQueueManager(send_callback=self.run_module)
@@ -91,7 +88,7 @@ class ChainBase:
 
     def __execute_addon_modules(self, method: str, result: Any, *args, **kwargs) -> Any:
         """Execute plugin module."""
-        for plugin, module_dict in self.addonmanager.get_addon_modules().items():
+        for plugin, module_dict in Context.addonmanager.get_addon_modules().items():
             plugin_id, plugin_name = plugin
             if method in module_dict:
                 func = module_dict[method]
@@ -122,7 +119,7 @@ class ChainBase:
         self, method: str, result: Any, *args, **kwargs
     ) -> Any:
         """Asynchronously execute plugin modules."""
-        for plugin, module_dict in self.addonmanager.get_addon_modules().items():
+        for plugin, module_dict in Context.addonmanager.get_addon_modules().items():
             plugin_id, plugin_name = plugin
             if method in module_dict:
                 func = module_dict[method]
@@ -139,9 +136,7 @@ class ChainBase:
                             else:
                                 # Run synchronous plugin functions in a thread pool to
                                 # avoid blocking
-                                result = await run_in_threadpool(
-                                    func, *args, **kwargs
-                                )
+                                result = await run_in_threadpool(func, *args, **kwargs)
                         elif isinstance(result, list):
                             # If the result is a list, merge the results of multiple
                             # module executions
@@ -167,7 +162,7 @@ class ChainBase:
         """Execute system module."""
         logger.debug(f"Request system module to execute: {method} ...")
         for module in sorted(
-            self.modulemanager.get_running_modules(method),
+            Context.modulemanager.get_running_modules(method),
             key=lambda x: x.get_priority(),
         ):
             module_id = module.__class__.__name__
@@ -207,7 +202,7 @@ class ChainBase:
         """Asynchronously execute system modules."""
         logger.debug(f"Request system module to execute: {method} ...")
         for module in sorted(
-            self.modulemanager.get_running_modules(method),
+            Context.modulemanager.get_running_modules(method),
             key=lambda x: x.get_priority(),
         ):
             module_id = module.__class__.__name__

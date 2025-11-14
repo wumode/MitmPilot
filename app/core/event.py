@@ -5,7 +5,6 @@ import random
 import threading
 import time
 import traceback
-import typing
 import uuid
 from collections.abc import Callable
 from queue import Empty, PriorityQueue
@@ -20,10 +19,6 @@ from app.schemas import ChainEventData
 from app.schemas.types import ChainEventType, EventType
 from app.utils.limit import ExponentialBackoffRateLimiter
 from app.utils.singleton import Singleton
-
-if typing.TYPE_CHECKING:
-    from app.core.addon import AddonManager
-    from app.core.module import ModuleManager
 
 DEFAULT_EVENT_PRIORITY = 10  # Default priority for events
 MIN_EVENT_CONSUMER_THREADS = 1  # Minimum number of event consumer threads
@@ -653,13 +648,11 @@ class EventManager(metaclass=Singleton):
         """
         class_name, method_name = self.__parse_handler_names(handler)
 
-        addon_manager = AddonManager()
-        module_manager = ModuleManager()
+        addon_manager = Context.addonmanager
+        module_manager = Context.modulemanager
 
         if class_name in addon_manager.get_addon_ids():
-            await self.__invoke_plugin_method_async(
-                addon_manager, class_name, method_name, event
-            )
+            await self.__invoke_plugin_method_async(class_name, method_name, event)
         elif class_name in module_manager.get_module_ids():
             await self.__invoke_module_method_async(
                 module_manager, class_name, method_name, event
@@ -678,10 +671,10 @@ class EventManager(metaclass=Singleton):
         return names[0], names[1]
 
     async def __invoke_plugin_method_async(
-        self, handler: AddonManager, class_name: str, method_name: str, event: Event
+        self, class_name: str, method_name: str, event: Event
     ):
         """Asynchronously invokes a plugin method."""
-        plugin = handler.running_addons.get(class_name)
+        plugin = Context.addonmanager.running_addons.get(class_name)
         if not plugin:
             return
         method: Callable | None = getattr(plugin, method_name, None)

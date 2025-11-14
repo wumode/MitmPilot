@@ -27,7 +27,7 @@ class AddonChian(ChainBase):
 class _AddonBase(metaclass=ABCMeta):
     """The addon module base class.
 
-    Implements the addon function by inheriting this class.
+    Implements addons by inheriting this class.
     """
 
     # name
@@ -213,8 +213,8 @@ class _AddonBase(metaclass=ABCMeta):
 
     def post_message(
         self,
-        channel: MessageChannel = None,
-        mtype: NotificationType = None,
+        channel: MessageChannel | None = None,
+        mtype: NotificationType | None = None,
         title: str | None = None,
         text: str | None = None,
         image: str | None = None,
@@ -244,8 +244,8 @@ class _AddonBase(metaclass=ABCMeta):
 
     def async_post_message(
         self,
-        channel: MessageChannel = None,
-        mtype: NotificationType = None,
+        channel: MessageChannel | None = None,
+        mtype: NotificationType | None = None,
         title: str | None = None,
         text: str | None = None,
         image: str | None = None,
